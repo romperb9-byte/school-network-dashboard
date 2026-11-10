@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ប្រព័ន្ធតាមដានទិន្នន័យបណ្តាញសាលារៀន</title>
+  
+  <!-- Tailwind CSS & Google Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- SheetJS & Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: 'Kantumruy Pro', sans-serif; }
+    .stat-table th, .stat-table td { border: 1px solid #cbd5e1; text-align: center; font-size: 11px; padding: 5px; }
+    .stat-table th { background-color: #f8fafc; font-weight: 600; }
+    .stat-table .gray-cell { background-color: #64748b; color: white; }
+    .stat-table .subtotal-cell { background-color: #f1f5f9; font-weight: bold; }
+    .chart-box { position: relative; height: 280px; width: 100%; min-height: 280px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-indigo-950 text-white shadow-md sticky top-0 z-30 border-b border-indigo-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center space-x-3 rtl:space-x-reverse">
+        <div class="bg-indigo-700/50 p-2.5 rounded-xl border border-indigo-500/30">
+          <svg class="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base md:text-lg font-bold">ប្រព័ន្ធតាមដានទិន្នន័យបណ្តាញសាលារៀន</h1>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live Sync
+            </span>
+          </div>
+          <p id="lastSyncText" class="text-xs text-indigo-300">ស្ថានភាព៖ កំពុងតភ្ជាប់ Google Sheet...</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <select id="schoolSelector" onchange="renderDashboard()" class="bg-indigo-900 text-white text-xs md:text-sm border border-indigo-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400">
+          <option value="ALL">-- សាលាទាំងអស់ --</option>
+        </select>
+
+        <button onclick="exportAllToExcel()" title="ទាញយកទិន្នន័យទាំងអស់ជា Excel" class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-semibold shadow transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span>ទាញយក Excel សរុប</span>
+        </button>
+
+        <button onclick="fetchLatestData(true)" title="Refresh" class="p-2 bg-indigo-900 hover:bg-indigo-800 text-indigo-200 border border-indigo-700 rounded-xl transition">
+          <svg id="syncIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+
+        <!-- ប៊ូតុងសម្អាតទិន្នន័យ (មានកូដការពារ 168) -->
+        <button onclick="handleClearData()" title="សម្អាតទិន្នន័យក្នុងប្រព័ន្ធ" class="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-semibold shadow transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          <span>សម្អាតទិន្នន័យ</span>
+        </button>
+
+        <label class="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold shadow transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span>Upload Excel</span>
+          <input type="file" id="fileInput" multiple accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast -->
+  <div id="toastNotification" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-sm">
+    <span id="toastMsg">សារជូនដំណឹង</span>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400">ចំនួនសាលារៀន</p>
+          <h3 id="statSchools" class="text-3xl font-bold text-slate-800 mt-1">0</h3>
+          <p class="text-xs text-slate-500 mt-0.5">សាលាក្នុងប្រព័ន្ធ</p>
+        </div>
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400">សិស្សសរុប</p>
+          <h3 id="statStudents" class="text-3xl font-bold text-indigo-600 mt-1">0</h3>
+          <p id="statStudentsFemale" class="text-xs text-pink-600 font-semibold mt-0.5">ស្រី: 0 នាក់ (0%)</p>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400">បុគ្គលិក / គ្រូសរុប</p>
+          <h3 id="statStaff" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+          <p id="statStaffFemale" class="text-xs text-pink-600 font-semibold mt-0.5">ស្រី: 0 នាក់ (0%)</p>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-400">ថ្នាក់រៀនសរុប</p>
+          <h3 id="statClasses" class="text-3xl font-bold text-amber-600 mt-1">0</h3>
+          <p class="text-xs text-amber-500 font-medium mt-0.5">ដំណើរការបច្ចុប្បន្ន</p>
+        </div>
+        <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- BMI Donut Chart -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h4 class="text-sm font-bold text-slate-700 mb-3">ស្ថានភាពអាហារូបត្ថម្ភសិស្ស (BMI Status)</h4>
+        <div class="chart-box flex items-center justify-center">
+          <canvas id="chartBMI"></canvas>
+        </div>
+      </div>
+
+      <!-- Grades Section with Dropdown & Export Excel -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h4 class="text-sm font-bold text-slate-700">ការបែងចែកសិស្សតាមកម្រិតថ្នាក់ (សរុប និង សិស្សស្រី)</h4>
+          
+          <div class="flex items-center gap-2">
+            <select id="gradeViewMode" onchange="toggleGradeViewMode()" class="bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer">
+              <option value="chart">📊 ក្រាប</option>
+              <option value="numbers">🔢 លេខ</option>
+            </select>
+
+            <button onclick="exportGradeTableToExcel()" title="ទាញយកតារាងនេះជា Excel" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg transition text-xs font-semibold inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <span>Excel</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="gradeChartView" class="chart-box">
+          <canvas id="chartGrades"></canvas>
+        </div>
+
+        <div id="gradeNumbersView" class="hidden h-[280px] overflow-y-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead class="sticky top-0 bg-slate-100 text-slate-700 shadow-sm">
+              <tr>
+                <th class="p-2.5 border border-slate-200">កម្រិតថ្នាក់</th>
+                <th class="p-2.5 border border-slate-200 text-indigo-700 font-bold">សិស្សសរុប</th>
+                <th class="p-2.5 border border-slate-200 text-pink-700 font-bold">សិស្សស្រី</th>
+                <th class="p-2.5 border border-slate-200 text-slate-600">ភាគរយស្រី</th>
+              </tr>
+            </thead>
+            <tbody id="gradeNumbersTbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ២. ស្ថិតិសិស្សតាមអាយុ និងកម្រិតថ្នាក់ (តារាងក្រសួងអប់រំ) -->
+    <div class="space-y-6">
+
+      <!-- ២.(ក១) កុមារមត្តេយ្យសិក្សាតាមអាយុ និងតាមកម្រិតថ្នាក់ -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-sm md:text-base font-bold text-slate-800">២.(ក១) កុមារមត្តេយ្យសិក្សាតាមអាយុ និងតាមកម្រិតថ្នាក់ឆ្នាំសិក្សា <span class="text-blue-600 font-semibold">គិតត្រឹម 01/11/2026</span></h3>
+          <button onclick="exportTableToExcel('tablePreSchoolFull', 'ស្ថិតិកុមារមត្តេយ្យសិក្សា_២_ក១')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Export Excel</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table id="tablePreSchoolFull" class="w-full stat-table border-collapse">
+            <thead>
+              <tr>
+                <th rowspan="2" class="w-20">អាយុ (ឆ្នាំ)</th>
+                <th colspan="2">មត្តេយ្យ-ក</th>
+                <th colspan="2">មត្តេយ្យ-ខ</th>
+                <th colspan="2">មត្តេយ្យ-គ</th>
+                <th colspan="2">មត្តេយ្យ-ឃ</th>
+                <th colspan="2" class="subtotal-cell">សរុប</th>
+              </tr>
+              <tr>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th class="subtotal-cell">សរុប</th><th class="subtotal-cell">ស្រី</th>
+              </tr>
+            </thead>
+            <tbody id="bodyPreSchoolTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ២.(ក២) សិស្សតាមអាយុ និងតាមកម្រិតថ្នាក់ ពីថ្នាក់ទី ១ ដល់ ទី ៦ -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-sm md:text-base font-bold text-slate-800">២.(ក២) សិស្សតាមអាយុ និងតាមកម្រិតថ្នាក់ក្នុងឆ្នាំសិក្សា <span class="text-blue-600 font-semibold">គិតត្រឹម 01/11/2026</span> (ពីថ្នាក់ទី ១ ដល់ ទី ៦)</h3>
+          <button onclick="exportTableToExcel('tablePrimarySchoolFull', 'ស្ថិតិសិស្សបឋមសិក្សា_២_ក២')" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Export Excel</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table id="tablePrimarySchoolFull" class="w-full stat-table border-collapse">
+            <thead>
+              <tr>
+                <th rowspan="2" class="w-20">អាយុ (ឆ្នាំ)</th>
+                <th colspan="2">ថ្នាក់ទី ១</th>
+                <th colspan="2">ថ្នាក់ទី ២</th>
+                <th colspan="2">ថ្នាក់ទី ៣</th>
+                <th colspan="2">ថ្នាក់ទី ៤</th>
+                <th colspan="2">ថ្នាក់ទី ៥</th>
+                <th colspan="2">ថ្នាក់ទី ៦</th>
+                <th colspan="2" class="subtotal-cell">សរុបរួម (ថ្នាក់ទី ១ ដល់ ៦)</th>
+              </tr>
+              <tr>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th>សរុប</th><th>ស្រី</th>
+                <th class="subtotal-cell">សរុប</th><th class="subtotal-cell">ស្រី</th>
+              </tr>
+            </thead>
+            <tbody id="bodyPrimarySchoolTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Collapsible Data Tables Section -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+      <div class="border-b border-slate-200 px-5 py-3.5 flex flex-wrap gap-4 justify-between items-center bg-slate-50/70">
+        <div class="flex items-center gap-3">
+          <div class="flex gap-2" id="tabButtonGroup">
+            <button onclick="setTab('students')" id="tab-students" class="px-4 py-2 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition">បញ្ជីសិស្ស</button>
+            <button onclick="setTab('staff')" id="tab-staff" class="px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition">បញ្ជីបុគ្គលិក</button>
+            <button onclick="setTab('classes')" id="tab-classes" class="px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition">បញ្ជីថ្នាក់រៀន</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="exportCurrentActiveTable()" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Export តារាងនេះ</span>
+          </button>
+
+          <!-- Search with clear button -->
+          <div id="searchContainer" class="relative">
+            <input type="text" id="tableSearchInput" onkeyup="searchCurrentTable()" placeholder="ស្វែងរកតាមឈ្មោះ/ថ្នាក់..." class="px-3.5 py-1.5 pr-8 border border-slate-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 w-52 md:w-60">
+            <button onclick="clearSearchInput()" id="btnClearSearch" title="សម្អាតការស្វែងរក" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-bold text-xs">
+              ✕
+            </button>
+          </div>
+
+          <button onclick="toggleTableSection()" id="btnToggleTable" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition">
+            <svg id="toggleIcon" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <span id="toggleText">លាក់តារាង</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="collapsibleTableBody" class="p-4 overflow-x-auto transition-all">
+        <!-- Students Table -->
+        <table id="tblStudents" class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
+              <th class="p-3">ល.រ</th>
+              <th class="p-3">សាលារៀន</th>
+              <th class="p-3">ឈ្មោះសិស្ស</th>
+              <th class="p-3">ភេទ</th>
+              <th class="p-3">ថ្នាក់</th>
+              <th class="p-3">BMI</th>
+              <th class="p-3">ស្ថានភាព BMI</th>
+              <th class="p-3">ពិនិត្យភ្នែក</th>
+              <th class="p-3">ពិនិត្យត្រចៀក</th>
+            </tr>
+          </thead>
+          <tbody id="bodyStudents" class="divide-y divide-slate-100">
+            <tr><td colspan="9" class="p-5 text-center text-slate-400">មិនទាន់មានទិន្នន័យ (សូមចុច Upload File Excel)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Staff Table -->
+        <table id="tblStaff" class="w-full text-left text-sm hidden">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
+              <th class="p-3">ល.រ</th>
+              <th class="p-3">សាលារៀន</th>
+              <th class="p-3">ឈ្មោះ</th>
+              <th class="p-3">ភេទ</th>
+              <th class="p-3">មុខតំណែង</th>
+              <th class="p-3">លេខទូរស័ព្ទ</th>
+              <th class="p-3">ប្រភេទការងារ</th>
+            </tr>
+          </thead>
+          <tbody id="bodyStaff" class="divide-y divide-slate-100"></tbody>
+        </table>
+
+        <!-- Classes Table -->
+        <table id="tblClasses" class="w-full text-left text-sm hidden">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
+              <th class="p-3">ល.រ</th>
+              <th class="p-3">សាលារៀន</th>
+              <th class="p-3">ឈ្មោះថ្នាក់</th>
+              <th class="p-3">ឆ្នាំសិក្សា</th>
+              <th class="p-3">គ្រូបន្ទុកថ្នាក់</th>
+              <th class="p-3">សិស្សសរុប</th>
+              <th class="p-3">ស្រី</th>
+            </tr>
+          </thead>
+          <tbody id="bodyClasses" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // URL នៃ Google Apps Script Web App
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-E3vAJZPizBokcilzcHLTZ0A9jLhIFrdwZXnA5jE7DxuTazjuDzc1e-oO8OABbSE5/exec';
+
+    let activeTab = 'students';
+    let isTableHidden = false;
+    let lastKnownTimestamp = '0';
+    let localData = { staff: [], classes: [], students: [] };
+    let chartBMIInstance = null;
+    let chartGradesInstance = null;
+
+    // Target Date: 01/11/2026
+    const TARGET_DATE = new Date(2026, 10, 1); 
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDashboard();
+      fetchLatestData(true);
+      // Auto-poll រៀងរាល់ 15 វិនាទីម្តង
+      setInterval(() => { fetchLatestData(false); }, 15000);
+    });
+
+    // មុខងារបំប្លែងលេខខ្មែរទៅជាលេខអារ៉ាប់
+    function toArabicDigits(str) {
+      if (!str) return '';
+      const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+      let res = String(str);
+      khmerNums.forEach((kn, i) => {
+        res = res.split(kn).join(String(i));
+      });
+      return res;
+    }
+
+    // មុខងារទាញយកទិន្នន័យ (ដំណើរការទាំងលើ GitHub Pages និងលើ Google Script)
+    async function fetchLatestData(isManual = false) {
+      const icon = document.getElementById('syncIcon');
+      if (icon) icon.classList.add('animate-spin');
+
+      // ប្រសិនបើរត់ក្នុង Google Apps Script Iframe
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            handleDataResponse(res, icon, isManual);
+          })
+          .withFailureHandler(function(err) {
+            if (icon) icon.classList.remove('animate-spin');
+            console.warn('Sync issue:', err);
+          })
+          .getInitialDashboardData();
+        return;
+      }
+
+      // ប្រសិនបើរត់លើ GitHub Pages / Static Server
+      try {
+        const resp = await fetch(`${SCRIPT_URL}?action=getData&_t=${Date.now()}`);
+        const res = await resp.json();
+        handleDataResponse(res, icon, isManual);
+      } catch (err) {
+        if (icon) icon.classList.remove('animate-spin');
+        console.error('Fetch error:', err);
+        if (isManual) showToast('បរាជ័យក្នុងការទាញទិន្នន័យពី Google Sheets');
+      }
+    }
+
+    function handleDataResponse(res, icon, isManual) {
+      if (icon) icon.classList.remove('animate-spin');
+      if (res && res.status === 'success') {
+        if (res.timestamp !== lastKnownTimestamp || isManual) {
+          lastKnownTimestamp = res.timestamp;
+          transformSheetRowsToLocal(res);
+          updateSchoolDropdown();
+          renderDashboard();
+          updateLastSyncTime();
+          if (isManual) showToast('ទិន្នន័យបានធ្វើបច្ចុប្បន្នភាព!');
+        }
+      } else if (res && res.status === 'error') {
+        console.warn('Backend returned error:', res.message);
+      }
+    }
+
+    // មុខងារសម្អាតទិន្នន័យ (ផ្ទៀងផ្ទាត់លេខកូដសម្ងាត់ 168)
+    async function handleClearData() {
+      const select = document.getElementById('schoolSelector');
+      const curSchool = select.value;
+      const schoolText = curSchool === 'ALL' ? 'ទិន្នន័យទាំងអស់នៃសាលារៀនទាំងអស់' : `ទិន្នន័យរបស់សាលា «${curSchool}»`;
+
+      const confirmMsg = `⚠️ ការព្រមាន៖ តើអ្នកពិតជាចង់សម្អាត/លុប ${schoolText} មែនដែរឬទេ?\n\nសកម្មភាពនេះនឹងលុបទិន្នន័យចេញពី Google Sheets ហើយមិនអាចត្រឡប់វិញបានឡើយ!`;
+      if (!confirm(confirmMsg)) return;
+
+      const enteredCode = prompt(`🔒 សុវត្ថិភាពប្រព័ន្ធ៖ សូមបញ្ចូលលេខកូដបញ្ជាក់សម្ងាត់ (PIN) ដើម្បីសម្អាត ${schoolText}៖`);
+      if (enteredCode === null) return; 
+
+      if (enteredCode.trim() !== '168') {
+        alert('❌ លេខកូដមិនត្រឹមត្រូវទេ! ប្រតិបត្តិការសម្អាតទិន្នន័យត្រូវបានបដិសេធ។');
+        return;
+      }
+
+      showToast('កំពុងដំណើរការសម្អាតទិន្នន័យ...');
+
+      try {
+        let res;
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (res && res.status === 'success') {
+                showToast('បានសម្អាតទិន្នន័យដោយជោគជ័យ!');
+                fetchLatestData(true);
+              } else {
+                showToast('បញ្ហាក្នុងការសម្អាត៖ ' + (res ? res.message : 'Error'));
+                alert('បញ្ហាក្នុងការសម្អាត៖ ' + (res ? res.message : 'Error'));
+              }
+            })
+            .withFailureHandler(function(err) {
+              showToast('បញ្ហា៖ ' + err);
+            })
+            .clearSchoolData(curSchool, enteredCode.trim());
+          return;
+        }
+
+        // POST ទៅកាន់ Google Apps Script Web App
+        const resp = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'clearData',
+            schoolName: curSchool,
+            passCode: enteredCode.trim()
+          })
+        });
+        res = await resp.json();
+
+        if (res && res.status === 'success') {
+          showToast('បានសម្អាតទិន្នន័យដោយជោគជ័យ!');
+          fetchLatestData(true);
+        } else {
+          showToast('បញ្ហាក្នុងការសម្អាត៖ ' + (res ? res.message : 'Error'));
+          alert('បញ្ហាក្នុងការសម្អាត៖ ' + (res ? res.message : 'Error'));
+        }
+      } catch (err) {
+        showToast('បញ្ហា៖ ' + err.toString());
+      }
+    }
+
+    function clearSearchInput() {
+      const input = document.getElementById('tableSearchInput');
+      input.value = '';
+      document.getElementById('btnClearSearch').classList.add('hidden');
+      searchCurrentTable();
+    }
+
+    function toggleGradeViewMode() {
+      const mode = document.getElementById('gradeViewMode').value;
+      const chartView = document.getElementById('gradeChartView');
+      const numbersView = document.getElementById('gradeNumbersView');
+
+      if (mode === 'numbers') {
+        chartView.classList.add('hidden');
+        numbersView.classList.remove('hidden');
+      } else {
+        numbersView.classList.add('hidden');
+        chartView.classList.remove('hidden');
+        setTimeout(() => {
+          renderGradesChartAndNumbers(getFilteredRecords().students);
+        }, 50);
+      }
+    }
+
+    // មុខងារគណនាអាយុសិស្ស គាំទ្រគ្រប់ទម្រង់ (លេខខ្មែរ/អារ៉ាប់, ថ្ងៃខែ, ឆ្នាំសុទ្ធ, Excel Date)
+    function calculateAge(dobStr) {
+      if (!dobStr) return null;
+      let clean = toArabicDigits(String(dobStr).trim());
+      if (!clean) return null;
+
+      let d = null, m = null, y = null;
+
+      // ១. ករណីជា Excel Serial Date Number (ឧ. 44197)
+      if (!isNaN(clean) && Number(clean) > 20000 && Number(clean) < 60000) {
+        const excelDate = new Date(Math.round((Number(clean) - 25569) * 86400 * 1000));
+        d = excelDate.getDate();
+        m = excelDate.getMonth();
+        y = excelDate.getFullYear();
+      }
+      // ២. ករណីបញ្ចូលត្រឹមតែឆ្នាំ ៤ ខ្ទង់ (ឧ. 2021 ឬ ២០២១)
+      else if (/^\d{4}$/.test(clean)) {
+        y = parseInt(clean, 10);
+        m = 0;
+        d = 1;
+      }
+      // ៣. ករណីមានសញ្ញាខណ្ឌ / , - , .
+      else if (/[\/\-\.]/.test(clean)) {
+        const parts = clean.split(/[\/\-\.]/).map(p => p.trim()).filter(Boolean);
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            // YYYY-MM-DD
+            y = parseInt(parts[0], 10);
+            m = parseInt(parts[1], 10) - 1;
+            d = parseInt(parts[2], 10);
+          } else {
+            // DD-MM-YYYY ឬ DD/MM/YYYY
+            d = parseInt(parts[0], 10);
+            m = parseInt(parts[1], 10) - 1;
+            y = parseInt(parts[2], 10);
+          }
+        } else if (parts.length === 2 && parts[1].length === 4) {
+          // MM/YYYY
+          y = parseInt(parts[1], 10);
+          m = parseInt(parts[0], 10) - 1;
+          d = 1;
+        }
+      }
+      // ៤. Fallback Native Date Parse
+      else {
+        const parsed = new Date(clean);
+        if (!isNaN(parsed.getTime())) {
+          d = parsed.getDate();
+          m = parsed.getMonth();
+          y = parsed.getFullYear();
+        }
+      }
+
+      if (y === null || isNaN(y) || y < 1920 || y > 2030) return null;
+      if (m === null || isNaN(m) || m < 0 || m > 11) m = 0;
+      if (d === null || isNaN(d) || d < 1 || d > 31) d = 1;
+
+      const birthDate = new Date(y, m, d);
+      let age = TARGET_DATE.getFullYear() - birthDate.getFullYear();
+      const mDiff = TARGET_DATE.getMonth() - birthDate.getMonth();
+      if (mDiff < 0 || (mDiff === 0 && TARGET_DATE.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age >= 0 ? age : 0;
+    }
+
+    // មុខងារសម្គាល់ និងតម្រឹមឈ្មោះថ្នាក់មត្តេយ្យឆ្លាតវៃ
+    function normalizePreSchoolGrade(gradeStr) {
+      if (!gradeStr) return null;
+      let g = toArabicDigits(String(gradeStr).trim());
+      
+      const isPre = /ម[្តត]+េយ្យ|កុមារដ្ឋាន|កម្រិត(ទាប|មធ្យម|ខ្ពស់)|^ម[\.\-_]/i.test(g);
+      if (isPre) {
+        if (/[\-_.\s]?ក$|[\-_.\s]?A$|កម្រិតទាប|ទាប/i.test(g)) return 'មត្តេយ្យ-ក';
+        if (/[\-_.\s]?ខ$|[\-_.\s]?B$|កម្រិតមធ្យម|មធ្យម/i.test(g)) return 'មត្តេយ្យ-ខ';
+        if (/[\-_.\s]?គ$|[\-_.\s]?C$|កម្រិតខ្ពស់|ខ្ពស់/i.test(g)) return 'មត្តេយ្យ-គ';
+        if (/[\-_.\s]?ឃ$|[\-_.\s]?D$/i.test(g)) return 'មត្តេយ្យ-ឃ';
+        return 'មត្តេយ្យ-ក';
+      }
+
+      if (g.includes('ក') && (g.includes('មត្តេយ្យ') || g.includes('មតេយ្យ'))) return 'មត្តេយ្យ-ក';
+      if (g.includes('ខ') && (g.includes('មត្តេយ្យ') || g.includes('មតេយ្យ'))) return 'មត្តេយ្យ-ខ';
+      if (g.includes('គ') && (g.includes('មត្តេយ្យ') || g.includes('មតេយ្យ'))) return 'មត្តេយ្យ-គ';
+      if (g.includes('ឃ') && (g.includes('មត្តេយ្យ') || g.includes('មតេយ្យ'))) return 'មត្តេយ្យ-ឃ';
+
+      return null;
+    }
+
+    function toggleTableSection() {
+      const container = document.getElementById('collapsibleTableBody');
+      const toggleText = document.getElementById('toggleText');
+      const toggleIcon = document.getElementById('toggleIcon');
+      const searchContainer = document.getElementById('searchContainer');
+      const tabGroup = document.getElementById('tabButtonGroup');
+
+      isTableHidden = !isTableHidden;
+
+      if (isTableHidden) {
+        container.classList.add('hidden');
+        searchContainer.classList.add('hidden');
+        tabGroup.classList.add('opacity-40', 'pointer-events-none');
+        toggleText.textContent = 'បង្ហាញតារាង';
+        toggleIcon.classList.add('rotate-180');
+      } else {
+        container.classList.remove('hidden');
+        searchContainer.classList.remove('hidden');
+        tabGroup.classList.remove('opacity-40', 'pointer-events-none');
+        toggleText.textContent = 'លាក់តារាង';
+        toggleIcon.classList.remove('rotate-180');
+      }
+    }
+
+    function transformSheetRowsToLocal(res) {
+      localData.staff = (res.staff || []).map(r => ({
+        school: r[0], name: r[1], gender: r[2], dob: r[3], role: r[4], phone: r[5], type: r[6]
+      }));
+      localData.classes = (res.classes || []).map(r => ({
+        school: r[0], name: r[1], year: r[2], teacher: r[3], total: Number(r[4]) || 0, female: Number(r[5]) || 0
+      }));
+      localData.students = (res.students || []).map(r => ({
+        school: r[0], name: r[1], gender: r[2], dob: r[3], grade: r[4], bmi: r[5], bmiStatus: r[6], eyeTest: r[7], earTest: r[8]
+      }));
+    }
+
+    async function handleExcelUpload(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      showToast(`កំពុងដំណើរការ Upload ឯកសារចំនួន ${files.length}...`);
+
+      for (let i = 0; i < files.length; i++) {
+        await parseAndUploadExcel(files[i]);
+      }
+      event.target.value = '';
+    }
+
+    function parseAndUploadExcel(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+
+            let schoolName = file.name.replace('.xlsx', '').replace('.xls', '').replace('បញ្ជីរាយនាមសាលា-', '').replace('បញ្ជីរាយនាមសាលា_', '');
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            if (firstSheet && firstSheet['A2'] && firstSheet['A2'].v) {
+              schoolName = String(firstSheet['A2'].v).replace('សាលា៖', '').trim();
+            }
+
+            const payload = { schoolName: schoolName, staff: [], classes: [], students: [] };
+
+            // បុគ្គលិក
+            if (workbook.Sheets['បញ្ជីបុគ្គលិក']) {
+              const raw = XLSX.utils.sheet_to_json(workbook.Sheets['បញ្ជីបុគ្គលិក'], { header: 1 });
+              for (let r = 4; r < raw.length; r++) {
+                const row = raw[r];
+                if (row && row[1] && String(row[1]).trim() !== '' && row[1] !== 'ឈ្មោះ') {
+                  let dobVal = row[3];
+                  if (dobVal instanceof Date) {
+                    dobVal = `${String(dobVal.getDate()).padStart(2, '0')}/${String(dobVal.getMonth()+1).padStart(2, '0')}/${dobVal.getFullYear()}`;
+                  }
+                  payload.staff.push({
+                    name: String(row[1] || '').trim(),
+                    gender: String(row[2] || '').trim(),
+                    dob: String(dobVal || '').trim(),
+                    role: String(row[4] || 'គ្រូបង្រៀន').trim(),
+                    phone: String(row[5] || '—').trim(),
+                    type: String(row[6] || 'បឋម').trim()
+                  });
+                }
+              }
+            }
+
+            // ថ្នាក់រៀន
+            if (workbook.Sheets['បញ្ជីថ្នាក់រៀន']) {
+              const raw = XLSX.utils.sheet_to_json(workbook.Sheets['បញ្ជីថ្នាក់រៀន'], { header: 1 });
+              for (let r = 4; r < raw.length; r++) {
+                const row = raw[r];
+                if (row && row[1] && String(row[1]).trim() !== '' && row[1] !== 'ឈ្មោះថ្នាក់' && row[1] !== 'សរុប') {
+                  payload.classes.push({
+                    name: String(row[1] || '').trim(),
+                    year: String(row[2] || '').trim(),
+                    teacher: String(row[3] || '').trim(),
+                    total: Number(row[4]) || 0,
+                    female: Number(row[5]) || 0
+                  });
+                }
+              }
+            }
+
+            // សិស្ស
+            if (workbook.Sheets['បញ្ជីសិស្ស']) {
+              const raw = XLSX.utils.sheet_to_json(workbook.Sheets['បញ្ជីសិស្ស'], { header: 1 });
+              for (let r = 5; r < raw.length; r++) {
+                const row = raw[r];
+                if (row && row[1] && String(row[1]).trim() !== '' && row[1] !== 'នាមត្រកូល និងនាម') {
+                  let dobVal = row[3];
+                  if (dobVal instanceof Date) {
+                    dobVal = `${String(dobVal.getDate()).padStart(2, '0')}/${String(dobVal.getMonth()+1).padStart(2, '0')}/${dobVal.getFullYear()}`;
+                  }
+                  payload.students.push({
+                    name: String(row[1] || '').trim(),
+                    gender: String(row[2] || '').trim(),
+                    dob: String(dobVal || '').trim(),
+                    grade: String(row[4] || 'មិនកំណត់').trim(),
+                    bmi: row[15] !== undefined ? String(row[15]).trim() : '—',
+                    bmiStatus: String(row[16] || 'មិនទាន់វាស់').trim(),
+                    eyeTest: String(row[20] || 'មិនទាន់ពិនិត្យ').trim(),
+                    earTest: String(row[27] || 'មិនទាន់ពិនិត្យ').trim()
+                  });
+                }
+              }
+            }
+
+            // Update UI ភ្លាមៗ (Optimistic Update)
+            payload.staff.forEach(s => localData.staff.push({ ...s, school: schoolName }));
+            payload.classes.forEach(c => localData.classes.push({ ...c, school: schoolName }));
+            payload.students.forEach(st => localData.students.push({ ...st, school: schoolName }));
+            updateSchoolDropdown();
+            renderDashboard();
+
+            // ផ្ញើទៅ Google Apps Script
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+              google.script.run
+                .withSuccessHandler(() => {
+                  showToast(`បានបញ្ចូល ${schoolName} ជោគជ័យ!`);
+                  resolve();
+                })
+                .withFailureHandler((err) => {
+                  showToast(`បញ្ហា៖ ${err}`);
+                  resolve();
+                })
+                .saveSchoolData(payload);
+            } else {
+              // Fetch POST ទៅ Apps Script
+              try {
+                const resp = await fetch(SCRIPT_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                  body: JSON.stringify({
+                    action: 'saveData',
+                    ...payload
+                  })
+                });
+                const res = await resp.json();
+                if (res && res.status === 'success') {
+                  showToast(`បានបញ្ចូល ${schoolName} ទៅ Google Sheet ជោគជ័យ!`);
+                } else {
+                  showToast(`កំហុស៖ ${res ? res.message : 'Unknown'}`);
+                }
+              } catch (postErr) {
+                console.error(postErr);
+                showToast(`បញ្ហាក្នុងការ Upload ទៅ Google Sheets: ${postErr.message}`);
+              }
+              resolve();
+            }
+          } catch (ex) {
+            console.error('Parsing error:', ex);
+            resolve();
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function updateSchoolDropdown() {
+      const select = document.getElementById('schoolSelector');
+      const cur = select.value;
+      const schoolSet = new Set();
+      localData.students.forEach(s => ifSchoolValid(s.school, schoolSet));
+      localData.staff.forEach(s => ifSchoolValid(s.school, schoolSet));
+
+      select.innerHTML = '<option value="ALL">-- សាលាទាំងអស់ --</option>';
+      schoolSet.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+      if (schoolSet.has(cur)) select.value = cur;
+    }
+
+    function ifSchoolValid(name, set) {
+      if (name && String(name).trim()) set.add(String(name).trim());
+    }
+
+    function getFilteredRecords() {
+      const sel = document.getElementById('schoolSelector').value;
+      if (sel === 'ALL') {
+        const uniqueSchools = new Set([...localData.students.map(s => s.school), ...localData.staff.map(s => s.school)].filter(Boolean));
+        return {
+          schoolCount: uniqueSchools.size,
+          staff: localData.staff,
+          classes: localData.classes,
+          students: localData.students
+        };
+      }
+      return {
+        schoolCount: 1,
+        staff: localData.staff.filter(s => s.school === sel),
+        classes: localData.classes.filter(c => c.school === sel),
+        students: localData.students.filter(st => st.school === sel)
+      };
+    }
+
+    function renderDashboard() {
+      const data = getFilteredRecords();
+
+      // Cards
+      document.getElementById('statSchools').textContent = data.schoolCount;
+      const totalStd = data.students.length;
+      const fStd = data.students.filter(s => s.gender === 'ស្រី').length;
+      const pctStd = totalStd > 0 ? ((fStd / totalStd) * 100).toFixed(1) : 0;
+      document.getElementById('statStudents').textContent = totalStd;
+      document.getElementById('statStudentsFemale').textContent = `ស្រី: ${fStd} នាក់ (${pctStd}%)`;
+
+      const totalStf = data.staff.length;
+      const fStf = data.staff.filter(st => st.gender === 'ស្រី').length;
+      const pctStf = totalStf > 0 ? ((fStf / totalStf) * 100).toFixed(1) : 0;
+      document.getElementById('statStaff').textContent = totalStf;
+      document.getElementById('statStaffFemale').textContent = `ស្រី: ${fStf} នាក់ (${pctStf}%)`;
+
+      document.getElementById('statClasses').textContent = data.classes.length;
+
+      // Tables & Charts
+      renderStudentsTable(data.students);
+      renderStaffTable(data.staff);
+      renderClassesTable(data.classes);
+      renderBMIChart(data.students);
+      renderGradesChartAndNumbers(data.students);
+
+      // Render 2 Special Age Distribution Tables
+      renderPreSchoolAgeTable(data.students);
+      renderPrimarySchoolAgeTable(data.students);
+    }
+
+    function renderGradesChartAndNumbers(students) {
+      const gradeOrder = [
+        'មត្តេយ្យ-ក', 'មត្តេយ្យ-ខ', 'មត្តេយ្យ-គ', 'មត្តេយ្យ-ឃ',
+        'មតេយ្យ-ក', 'មតេយ្យ-ខ', 'មតេយ្យ-គ', 'មតេយ្យ-ឃ',
+        '1-ក', '1-ខ', '2-ក', '2-ខ', '3-ក', '3-ខ', '4-ក', '4-ខ', '5-ក', '5-ខ', '6-ក', '6-ខ'
+      ];
+      const gradeMap = {};
+
+      students.forEach(s => {
+        let g = s.grade || 'មិនកំណត់';
+        if (!gradeMap[g]) gradeMap[g] = { total: 0, female: 0 };
+        gradeMap[g].total++;
+        if (s.gender === 'ស្រី') gradeMap[g].female++;
+      });
+
+      const labels = Object.keys(gradeMap).sort((a, b) => {
+        let ia = gradeOrder.indexOf(a);
+        let ib = gradeOrder.indexOf(b);
+        if (ia === -1) ia = 999;
+        if (ib === -1) ib = 999;
+        return ia - ib;
+      });
+
+      const totalData = labels.map(l => gradeMap[l].total);
+      const femaleData = labels.map(l => gradeMap[l].female);
+
+      const canvas = document.getElementById('chartGrades');
+      if (canvas) {
+        if (chartGradesInstance) {
+          chartGradesInstance.destroy();
+        }
+        chartGradesInstance = new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'សិស្សសរុប', data: totalData, backgroundColor: '#6366f1', borderRadius: 5, barPercentage: 0.8 },
+              { label: 'សិស្សស្រី', data: femaleData, backgroundColor: '#ec4899', borderRadius: 5, barPercentage: 0.8 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+
+      const tbody = document.getElementById('gradeNumbersTbody');
+      if (tbody) {
+        if (labels.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">មិនទាន់មានទិន្នន័យ</td></tr>';
+          return;
+        }
+
+        let rowsHtml = '';
+        let totAll = 0, femAll = 0;
+        labels.forEach(g => {
+          const t = gradeMap[g].total;
+          const f = gradeMap[g].female;
+          const pct = t > 0 ? ((f / t) * 100).toFixed(1) : '0';
+          totAll += t;
+          femAll += f;
+          rowsHtml += `
+            <tr class="hover:bg-slate-50 border-b border-slate-100">
+              <td class="p-2 font-semibold text-slate-800 text-left pl-4">${g}</td>
+              <td class="p-2 font-bold text-indigo-600">${t}</td>
+              <td class="p-2 font-bold text-pink-600">${f}</td>
+              <td class="p-2 text-slate-500 font-medium">${pct}%</td>
+            </tr>
+          `;
+        });
+        const totalPct = totAll > 0 ? ((femAll / totAll) * 100).toFixed(1) : '0';
+        rowsHtml += `
+          <tr class="bg-slate-100 font-bold">
+            <td class="p-2.5 text-left pl-4 text-slate-800">សរុបទាំងអស់</td>
+            <td class="p-2.5 text-indigo-700">${totAll}</td>
+            <td class="p-2.5 text-pink-700">${femAll}</td>
+            <td class="p-2.5 text-slate-700">${totalPct}%</td>
+          </tr>
+        `;
+        tbody.innerHTML = rowsHtml;
+      }
+    }
+
+    // ២.(ក១) តារាងកុមារមត្តេយ្យសិក្សាតាមអាយុ និងកម្រិតថ្នាក់
+    function renderPreSchoolAgeTable(students) {
+      const grades = ['មត្តេយ្យ-ក', 'មត្តេយ្យ-ខ', 'មត្តេយ្យ-គ', 'មត្តេយ្យ-ឃ'];
+      const ages = [3, 4, 5, '5+'];
+      const khmerNums = { 3: '៣', 4: '៤', 5: '៥', '5+': '៥+' };
+      
+      const matrix = {};
+      ages.forEach(a => {
+        matrix[a] = {};
+        grades.forEach(g => { matrix[a][g] = { total: 0, female: 0 }; });
+      });
+
+      students.forEach(s => {
+        const g = normalizePreSchoolGrade(s.grade);
+        if (g && grades.includes(g)) {
+          const age = calculateAge(s.dob);
+          if (age !== null) {
+            let ageKey = null;
+            if (age <= 3) ageKey = 3;
+            else if (age === 4) ageKey = 4;
+            else if (age === 5) ageKey = 5;
+            else if (age > 5) ageKey = '5+';
+
+            if (ageKey && matrix[ageKey] && matrix[ageKey][g]) {
+              matrix[ageKey][g].total++;
+              if (s.gender === 'ស្រី') matrix[ageKey][g].female++;
+            }
+          }
+        }
+      });
+
+      const tbody = document.getElementById('bodyPreSchoolTable');
+      let html = '';
+      const colTotals = { 'មត្តេយ្យ-ក': { t: 0, f: 0 }, 'មត្តេយ្យ-ខ': { t: 0, f: 0 }, 'មត្តេយ្យ-គ': { t: 0, f: 0 }, 'មត្តេយ្យ-ឃ': { t: 0, f: 0 } };
+      let grandTotal = 0, grandFemale = 0;
+
+      ages.forEach(a => {
+        let rowTot = 0, rowFem = 0;
+        html += `<tr><td class="font-bold bg-slate-50">${khmerNums[a]}</td>`;
+        grades.forEach(g => {
+          const val = matrix[a][g];
+          rowTot += val.total;
+          rowFem += val.female;
+          colTotals[g].t += val.total;
+          colTotals[g].f += val.female;
+
+          let isGray = false;
+          if (a === 3 && (g === 'មត្តេយ្យ-ខ' || g === 'មត្តេយ្យ-គ')) isGray = true;
+          if (a === 4 && (g === 'មត្តេយ្យ-ក' || g === 'មត្តេយ្យ-គ')) isGray = true;
+          if (a === 5 && (g === 'មត្តេយ្យ-ក' || g === 'មត្តេយ្យ-ខ')) isGray = true;
+          if (a === '5+' && (g === 'មត្តេយ្យ-ក' || g === 'មត្តេយ្យ-ខ' || g === 'មត្តេយ្យ-គ')) isGray = true;
+
+          const cellClass = isGray ? 'gray-cell' : '';
+          html += `<td class="${cellClass}">${val.total || (isGray ? '' : 0)}</td>`;
+          html += `<td class="${cellClass}">${val.female || (isGray ? '' : 0)}</td>`;
+        });
+        grandTotal += rowTot;
+        grandFemale += rowFem;
+        html += `<td class="subtotal-cell">${rowTot}</td><td class="subtotal-cell text-pink-600">${rowFem}</td></tr>`;
+      });
+
+      html += `<tr class="subtotal-cell font-bold"><td class="bg-slate-200">សរុប</td>`;
+      grades.forEach(g => {
+        html += `<td>${colTotals[g].t}</td><td class="text-pink-600">${colTotals[g].f}</td>`;
+      });
+      html += `<td class="bg-indigo-50 text-indigo-700">${grandTotal}</td><td class="bg-pink-50 text-pink-700">${grandFemale}</td></tr>`;
+
+      tbody.innerHTML = html;
+    }
+
+    // ២.(ក២) តារាងសិស្សបឋមសិក្សាតាមអាយុ និងកម្រិតថ្នាក់ (ថ្នាក់ទី ១ ដល់ ៦)
+    function renderPrimarySchoolAgeTable(students) {
+      const grades = ['1', '2', '3', '4', '5', '6'];
+      const ages = [6, 7, 8, 9, 10, 11, 12, 13, 14, '15+'];
+
+      const matrix = {};
+      ages.forEach(a => {
+        matrix[a] = {};
+        grades.forEach(g => { matrix[a][g] = { total: 0, female: 0 }; });
+      });
+
+      students.forEach(s => {
+        const rawGrade = toArabicDigits((s.grade || '').trim());
+        const match = rawGrade.match(/(?:ថ្នាក់ទី|ទី)?\s*([1-6])/);
+        if (match) {
+          const g = match[1];
+          const age = calculateAge(s.dob);
+          if (age !== null) {
+            let ageKey = null;
+            if (age <= 6) ageKey = 6;
+            else if (age >= 15) ageKey = '15+';
+            else if (ages.includes(age)) ageKey = age;
+
+            if (ageKey && matrix[ageKey] && matrix[ageKey][g]) {
+              matrix[ageKey][g].total++;
+              if (s.gender === 'ស្រី') matrix[ageKey][g].female++;
+            }
+          }
+        }
+      });
+
+      const tbody = document.getElementById('bodyPrimarySchoolTable');
+      let html = '';
+      const colTotals = { '1': { t: 0, f: 0 }, '2': { t: 0, f: 0 }, '3': { t: 0, f: 0 }, '4': { t: 0, f: 0 }, '5': { t: 0, f: 0 }, '6': { t: 0, f: 0 } };
+      let grandTotal = 0, grandFemale = 0;
+      const khmerNums = { 6: '៦', 7: '៧', 8: '៨', 9: '៩', 10: '១០', 11: '១១', 12: '១២', 13: '១៣', 14: '១៤', '15+': '១៥+' };
+
+      ages.forEach(a => {
+        let rowTot = 0, rowFem = 0;
+        html += `<tr><td class="font-bold bg-slate-50">${khmerNums[a]}</td>`;
+        grades.forEach(g => {
+          const val = matrix[a][g];
+          rowTot += val.total;
+          rowFem += val.female;
+          colTotals[g].t += val.total;
+          colTotals[g].f += val.female;
+
+          let isGray = false;
+          const numA = typeof a === 'number' ? a : 15;
+          const numG = parseInt(g, 10);
+          if (numA < numG + 5) isGray = true;
+
+          const cellClass = isGray ? 'gray-cell' : '';
+          html += `<td class="${cellClass}">${val.total || (isGray ? '' : 0)}</td>`;
+          html += `<td class="${cellClass}">${val.female || (isGray ? '' : 0)}</td>`;
+        });
+        grandTotal += rowTot;
+        grandFemale += rowFem;
+        html += `<td class="subtotal-cell">${rowTot}</td><td class="subtotal-cell text-pink-600">${rowFem}</td></tr>`;
+      });
+
+      html += `<tr class="subtotal-cell font-bold"><td class="bg-slate-200">សរុប</td>`;
+      grades.forEach(g => {
+        html += `<td>${colTotals[g].t}</td><td class="text-pink-600">${colTotals[g].f}</td>`;
+      });
+      html += `<td class="bg-indigo-50 text-indigo-700">${grandTotal}</td><td class="bg-pink-50 text-pink-700">${grandFemale}</td></tr>`;
+
+      tbody.innerHTML = html;
+    }
+
+    function renderStudentsTable(students) {
+      const tbody = document.getElementById('bodyStudents');
+      if (students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="p-5 text-center text-slate-400">មិនទាន់មានទិន្នន័យ (សូមចុច Upload File Excel)</td></tr>';
+        return;
+      }
+      tbody.innerHTML = students.map((s, idx) => `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="p-3 text-slate-500">${idx + 1}</td>
+          <td class="p-3 text-xs font-semibold text-slate-700">${s.school ? s.school.split('(')[0] : '—'}</td>
+          <td class="p-3 font-semibold text-slate-800">${s.name}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-xs ${s.gender === 'ស្រី' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}">${s.gender}</span></td>
+          <td class="p-3 text-slate-600 font-medium">${s.grade}</td>
+          <td class="p-3 text-slate-600">${s.bmi}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-xs ${getBmiBadge(s.bmiStatus)}">${s.bmiStatus}</span></td>
+          <td class="p-3 text-xs text-slate-600">${s.eyeTest}</td>
+          <td class="p-3 text-xs text-slate-600">${s.earTest}</td>
+        </tr>
+      `).join('');
+    }
+
+    function getBmiBadge(st) {
+      if (st.includes('ស្គម')) return 'bg-amber-100 text-amber-700';
+      if (st.includes('ធម្មតា')) return 'bg-emerald-100 text-emerald-700';
+      if (st.includes('លើស')) return 'bg-rose-100 text-rose-700';
+      return 'bg-slate-100 text-slate-600';
+    }
+
+    function renderStaffTable(staff) {
+      const tbody = document.getElementById('bodyStaff');
+      if (staff.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-5 text-center text-slate-400">គ្មានទិន្នន័យ</td></tr>';
+        return;
+      }
+      tbody.innerHTML = staff.map((st, idx) => `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="p-3 text-slate-500">${idx + 1}</td>
+          <td class="p-3 text-xs text-slate-700">${st.school ? st.school.split('(')[0] : '—'}</td>
+          <td class="p-3 font-semibold text-slate-800">${st.name}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-xs ${st.gender === 'ស្រី' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'}">${st.gender}</span></td>
+          <td class="p-3 text-slate-600">${st.role}</td>
+          <td class="p-3 text-slate-600 font-mono text-xs">${st.phone}</td>
+          <td class="p-3 text-slate-600 text-xs">${st.type}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderClassesTable(classes) {
+      const tbody = document.getElementById('bodyClasses');
+      if (classes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-5 text-center text-slate-400">គ្មានទិន្នន័យ</td></tr>';
+        return;
+      }
+      tbody.innerHTML = classes.map((c, idx) => `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="p-3 text-slate-500">${idx + 1}</td>
+          <td class="p-3 text-xs text-slate-700">${c.school ? c.school.split('(')[0] : '—'}</td>
+          <td class="p-3 font-semibold text-indigo-600">${c.name}</td>
+          <td class="p-3 text-slate-600">${c.year}</td>
+          <td class="p-3 text-slate-700">${c.teacher || '—'}</td>
+          <td class="p-3 font-bold text-slate-800">${c.total}</td>
+          <td class="p-3 text-pink-600 font-semibold">${c.female}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderBMIChart(students) {
+      const counts = { 'ស្គមខ្លាំង': 0, 'ស្គម': 0, 'ទម្ងន់ធម្មតា': 0, 'លើសទម្ងន់': 0, 'មិនទាន់វាស់': 0 };
+      students.forEach(s => {
+        if (counts[s.bmiStatus] !== undefined) counts[s.bmiStatus]++;
+        else counts['មិនទាន់វាស់']++;
+      });
+
+      const canvas = document.getElementById('chartBMI');
+      if (!canvas) return;
+
+      if (chartBMIInstance) chartBMIInstance.destroy();
+      chartBMIInstance = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{ data: Object.values(counts), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#f43f5e', '#cbd5e1'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function setTab(tab) {
+      activeTab = tab;
+      ['students', 'staff', 'classes'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const tbl = document.getElementById(`tbl${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (t === tab) {
+          btn.className = "px-4 py-2 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition";
+          tbl.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition";
+          tbl.classList.add('hidden');
+        }
+      });
+    }
+
+    function searchCurrentTable() {
+      const q = document.getElementById('tableSearchInput').value.toLowerCase();
+      const btnClear = document.getElementById('btnClearSearch');
+      if (q.trim() !== '') {
+        btnClear.classList.remove('hidden');
+      } else {
+        btnClear.classList.add('hidden');
+      }
+
+      const map = { students: 'bodyStudents', staff: 'bodyStaff', classes: 'bodyClasses' };
+      const rows = document.getElementById(map[activeTab]).getElementsByTagName('tr');
+      for (let r of rows) {
+        r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+      }
+    }
+
+    // ==========================================
+    // មុខងារ EXCEL EXPORT
+    // ==========================================
+
+    function exportGradeTableToExcel() {
+      const data = getFilteredRecords();
+      const gradeOrder = [
+        'មត្តេយ្យ-ក', 'មត្តេយ្យ-ខ', 'មត្តេយ្យ-គ', 'មត្តេយ្យ-ឃ',
+        'មតេយ្យ-ក', 'មតេយ្យ-ខ', 'មតេយ្យ-គ', 'មតេយ្យ-ឃ',
+        '1-ក', '1-ខ', '2-ក', '2-ខ', '3-ក', '3-ខ', '4-ក', '4-ខ', '5-ក', '5-ខ', '6-ក', '6-ខ'
+      ];
+      const gradeMap = {};
+
+      data.students.forEach(s => {
+        let g = s.grade || 'មិនកំណត់';
+        if (!gradeMap[g]) gradeMap[g] = { total: 0, female: 0 };
+        gradeMap[g].total++;
+        if (s.gender === 'ស្រី') gradeMap[g].female++;
+      });
+
+      const labels = Object.keys(gradeMap).sort((a, b) => {
+        let ia = gradeOrder.indexOf(a);
+        let ib = gradeOrder.indexOf(b);
+        if (ia === -1) ia = 999;
+        if (ib === -1) ib = 999;
+        return ia - ib;
+      });
+
+      const excelRows = [
+        ['កម្រិតថ្នាក់', 'សិស្សសរុប', 'សិស្សស្រី', 'ភាគរយស្រី']
+      ];
+
+      let totAll = 0, femAll = 0;
+      labels.forEach(g => {
+        const t = gradeMap[g].total;
+        const f = gradeMap[g].female;
+        const pct = t > 0 ? ((f / t) * 100).toFixed(1) + '%' : '0%';
+        totAll += t;
+        femAll += f;
+        excelRows.push([g, t, f, pct]);
+      });
+
+      const totalPct = totAll > 0 ? ((femAll / totAll) * 100).toFixed(1) + '%' : '0%';
+      excelRows.push(['សរុបទាំងអស់', totAll, femAll, totalPct]);
+
+      downloadWorkbook([ { name: 'ស្ថិតិកម្រិតថ្នាក់', data: excelRows } ], 'ស្ថិតិកម្រិតថ្នាក់_សរុប_និងស្រី.xlsx');
+    }
+
+    function exportTableToExcel(tableId, filename) {
+      const tbl = document.getElementById(tableId);
+      if (!tbl) return;
+      const wb = XLSX.utils.table_to_book(tbl, { sheet: "ស្ថិតិ" });
+      XLSX.writeFile(wb, `${filename}.xlsx`);
+    }
+
+    function exportCurrentActiveTable() {
+      const data = getFilteredRecords();
+      let sheetData = [];
+      let filename = '';
+
+      if (activeTab === 'students') {
+        filename = 'បញ្ជីសិស្ស';
+        sheetData.push(['ល.រ', 'សាលារៀន', 'ឈ្មោះសិស្ស', 'ភេទ', 'ថ្នាក់', 'BMI', 'ស្ថានភាព BMI', 'ពិនិត្យភ្នែក', 'ពិនិត្យត្រចៀក']);
+        data.students.forEach((s, i) => {
+          sheetData.push([i + 1, s.school, s.name, s.gender, s.grade, s.bmi, s.bmiStatus, s.eyeTest, s.earTest]);
+        });
+      } else if (activeTab === 'staff') {
+        filename = 'បញ្ជីបុគ្គលិក';
+        sheetData.push(['ល.រ', 'សាលារៀន', 'ឈ្មោះ', 'ភេទ', 'មុខតំណែង', 'លេខទូរស័ព្ទ', 'ប្រភេទការងារ']);
+        data.staff.forEach((st, i) => {
+          sheetData.push([i + 1, st.school, st.name, st.gender, st.role, st.phone, st.type]);
+        });
+      } else {
+        filename = 'បញ្ជីថ្នាក់រៀន';
+        sheetData.push(['ល.រ', 'សាលារៀន', 'ឈ្មោះថ្នាក់', 'ឆ្នាំសិក្សា', 'គ្រូបន្ទុកថ្នាក់', 'សិស្សសរុប', 'សិស្សស្រី']);
+        data.classes.forEach((c, i) => {
+          sheetData.push([i + 1, c.school, c.name, c.year, c.teacher, c.total, c.female]);
+        });
+      }
+
+      downloadWorkbook([ { name: filename, data: sheetData } ], `${filename}.xlsx`);
+    }
+
+    function exportAllToExcel() {
+      const data = getFilteredRecords();
+      const wb = XLSX.utils.book_new();
+
+      const stdRows = [['ល.រ', 'សាលារៀន', 'ឈ្មោះសិស្ស', 'ភេទ', 'ថ្ងៃកំណើត', 'ថ្នាក់', 'BMI', 'ស្ថានភាព BMI', 'ពិនិត្យភ្នែក', 'ពិនិត្យត្រចៀក']];
+      data.students.forEach((s, i) => stdRows.push([i + 1, s.school, s.name, s.gender, s.dob, s.grade, s.bmi, s.bmiStatus, s.eyeTest, s.earTest]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stdRows), "បញ្ជីសិស្ស");
+
+      const stfRows = [['ល.រ', 'សាលារៀន', 'ឈ្មោះ', 'ភេទ', 'ថ្ងៃកំណើត', 'មុខតំណែង', 'លេខទូរស័ព្ទ', 'ប្រភេទការងារ']];
+      data.staff.forEach((st, i) => stfRows.push([i + 1, st.school, st.name, st.gender, st.dob, st.role, st.phone, st.type]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stfRows), "បញ្ជីបុគ្គលិក");
+
+      const clsRows = [['ល.រ', 'សាលារៀន', 'ឈ្មោះថ្នាក់', 'ឆ្នាំសិក្សា', 'គ្រូបន្ទុកថ្នាក់', 'សិស្សសរុប', 'សិស្សស្រី']];
+      data.classes.forEach((c, i) => clsRows.push([i + 1, c.school, c.name, c.year, c.teacher, c.total, c.female]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(clsRows), "បញ្ជីថ្នាក់រៀន");
+
+      const tblPre = document.getElementById('tablePreSchoolFull');
+      if (tblPre) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(tblPre), "មត្តេយ្យ_២_ក១");
+
+      const tblPri = document.getElementById('tablePrimarySchoolFull');
+      if (tblPri) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(tblPri), "បឋម_២_ក២");
+
+      XLSX.writeFile(wb, "របាយការណ៍ស្ថិតិសាលារៀន_ពេញលេញ.xlsx");
+      showToast("បានទាញយក Excel គ្រប់មុខងារដោយជោគជ័យ!");
+    }
+
+    function downloadWorkbook(sheetsArray, filename) {
+      const wb = XLSX.utils.book_new();
+      sheetsArray.forEach(s => {
+        const ws = XLSX.utils.aoa_to_sheet(s.data);
+        XLSX.utils.book_append_sheet(wb, ws, s.name);
+      });
+      XLSX.writeFile(wb, filename);
+      showToast(`បានទាញយក ${filename} ជោគជ័យ!`);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toastNotification');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => { t.classList.add('hidden'); }, 3000);
+    }
+
+    function updateLastSyncTime() {
+      const d = new Date();
+      document.getElementById('lastSyncText').textContent = `ស្ថានភាព៖ ធ្វើបច្ចុប្បន្នភាពម៉ោង ${d.toLocaleTimeString('km-KH')}`;
+    }
+  </script>
+</body>
+</html>
