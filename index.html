@@ -21,6 +21,18 @@
     .stat-table .gray-cell { background-color: #64748b; color: white; }
     .stat-table .subtotal-cell { background-color: #f1f5f9; font-weight: bold; }
     .chart-box { position: relative; height: 280px; width: 100%; min-height: 280px; }
+
+    /* Exam Room Table Styles */
+    .exam-table th, .exam-table td { border: 1px solid #334155; padding: 6px 8px; font-size: 12px; }
+    .exam-table th { background-color: #f8fafc; font-weight: 700; color: #1e293b; text-align: center; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #examPrintArea, #examPrintArea * { visibility: visible; }
+      #examPrintArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+      .exam-room-page { page-break-after: always; padding: 25px 35px; min-height: 100vh; box-sizing: border-box; }
+      header, nav, #tabButtonGroup, .no-print, button, select, input, #searchContainer { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
@@ -45,6 +57,11 @@
       </div>
 
       <div class="flex items-center gap-2.5 flex-wrap">
+        <!-- ប៊ូតុងចូលចែកបន្ទប់ប្រឡងរហ័ស -->
+        <button onclick="openExamRoomAllocation()" title="ចូលទៅកាន់មុខងារចែកបន្ទប់ប្រឡងភ្លាមៗ" class="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold shadow-md transition transform active:scale-95">
+          <span>+ 📝 ចែកបន្ទប់ប្រឡង</span>
+        </button>
+
         <select id="schoolSelector" onchange="renderDashboard()" class="bg-indigo-900 text-white text-xs md:text-sm border border-indigo-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400">
           <option value="ALL">-- សាលាទាំងអស់ --</option>
         </select>
@@ -293,10 +310,14 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
       <div class="border-b border-slate-200 px-5 py-3.5 flex flex-wrap gap-4 justify-between items-center bg-slate-50/70">
         <div class="flex items-center gap-3">
-          <div class="flex gap-2" id="tabButtonGroup">
+          <div class="flex gap-2 flex-wrap" id="tabButtonGroup">
             <button onclick="setTab('students')" id="tab-students" class="px-4 py-2 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition">បញ្ជីសិស្ស</button>
             <button onclick="setTab('staff')" id="tab-staff" class="px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition">បញ្ជីបុគ្គលិក</button>
             <button onclick="setTab('classes')" id="tab-classes" class="px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition">បញ្ជីថ្នាក់រៀន</button>
+            <button onclick="setTab('exam')" id="tab-exam" class="px-4 py-2 border-b-2 font-semibold text-sm border-transparent text-amber-600 hover:text-amber-700 transition flex items-center gap-1.5">
+              <span>📝</span>
+              <span>ចែកបន្ទប់ប្រឡង</span>
+            </button>
           </div>
         </div>
 
@@ -373,6 +394,234 @@
           </thead>
           <tbody id="bodyClasses" class="divide-y divide-slate-100"></tbody>
         </table>
+
+        <!-- Exam Room Allocation Section (មុខងារចែកបន្ទប់ប្រឡងផ្លូវការ) -->
+        <div id="tblExam" class="hidden space-y-6">
+          
+          <!-- Banner & Intro -->
+          <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl p-4 md:p-5 text-white shadow-sm flex flex-wrap justify-between items-center gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📝</span>
+                <h3 class="text-base md:text-lg font-bold">ប្រព័ន្ធបែងចែកបន្ទប់ប្រឡងតាមរដ្ឋបាលផ្លូវការ</h3>
+              </div>
+              <p class="text-xs md:text-sm text-amber-100 mt-1">
+                រដ្ឋបាលស្រុកតាលោសែនជ័យ • ការិយាល័យអប់រំ យុវជន និងកីឡា (គាំទ្រសាលាបឋមសិក្សាទាំង ៣២)
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="exportExamRoomsWord()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow transition inline-flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                <span>Word (.doc)</span>
+              </button>
+              <button onclick="exportExamRoomsExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow transition inline-flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Excel (.xlsx)</span>
+              </button>
+              <button onclick="printExamRooms()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow transition inline-flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>បោះពុម្ព / PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Configuration & Inputs Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Left: Settings & Mode (7 cols) -->
+            <div class="lg:col-span-7 space-y-4">
+              
+              <!-- Card 1: School & Exam Details -->
+              <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <span>🏛️</span> <span>ព័ត៌មានរដ្ឋបាល និងសម័យប្រឡង</span>
+                </h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ជ្រើសរើសសាលារៀន (៣២ សាលាក្នុងស្រុក)៖</label>
+                    <select id="examSchoolSelect" onchange="onExamSchoolChange()" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                      <!-- Populated via JS -->
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ឈ្មោះកម្រង (ស្វ័យប្រវត្តិ)៖</label>
+                    <input type="text" id="examClusterInput" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-semibold text-indigo-700" placeholder="កម្រង...">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ថ្នាក់ទី / កម្រិត៖</label>
+                    <input type="text" id="examGradeInput" value="ថ្នាក់ទី ៦-ក" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">សម័យប្រឡង៖</label>
+                    <input type="text" id="examSessionInput" value="០១ កក្កដា ២០២៦" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">កាលបរិច្ឆេទលើជើងក្រោម (Footer Date)៖</label>
+                    <input type="text" id="examFooterDateInput" value="ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 text-slate-700">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ទីតាំងរដ្ឋបាល៖</label>
+                    <input type="text" id="examLocationInput" value="តាលោសែនជ័យ" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 text-slate-700">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2: Allocation Mode -->
+              <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <span>⚖️</span> <span>វិធីសាស្ត្រចែកបន្ទប់ប្រឡង (Allocation Mode)</span>
+                </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <label class="cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-500 transition flex flex-col justify-between" id="labelModePerRoom">
+                    <div class="flex items-center gap-2">
+                      <input type="radio" name="examAllocMode" value="perRoom" checked onchange="updateAllocModeUI()" class="text-amber-600 focus:ring-amber-500">
+                      <span class="text-xs font-bold text-slate-800">១បន្ទប់ ២០នាក់</span>
+                    </div>
+                    <div class="mt-2 text-[11px] text-slate-500">
+                      កំណត់ <input type="number" id="examPerRoomCount" value="20" min="1" max="100" class="w-12 text-center text-xs border border-slate-300 rounded px-1 py-0.5 font-bold text-amber-700"> នាក់/បន្ទប់
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-500 transition flex flex-col justify-between" id="labelModeSplitTwo">
+                    <div class="flex items-center gap-2">
+                      <input type="radio" name="examAllocMode" value="splitTwo" onchange="updateAllocModeUI()" class="text-amber-600 focus:ring-amber-500">
+                      <span class="text-xs font-bold text-slate-800">ចែកជា ២បន្ទប់</span>
+                    </div>
+                    <p class="mt-2 text-[11px] text-slate-500">
+                      ចែកស្មើគ្នាជា ២បន្ទប់ (ឧ. ៤៥នាក់ = ២៣ និង ២២)
+                    </p>
+                  </label>
+
+                  <label class="cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-500 transition flex flex-col justify-between" id="labelModeCustomRooms">
+                    <div class="flex items-center gap-2">
+                      <input type="radio" name="examAllocMode" value="customRooms" onchange="updateAllocModeUI()" class="text-amber-600 focus:ring-amber-500">
+                      <span class="text-xs font-bold text-slate-800">កំណត់ចំនួនបន្ទប់</span>
+                    </div>
+                    <div class="mt-2 text-[11px] text-slate-500">
+                      ចែកស្មើជា <input type="number" id="examCustomRoomsCount" value="3" min="1" max="20" class="w-12 text-center text-xs border border-slate-300 rounded px-1 py-0.5 font-bold text-indigo-700"> បន្ទប់
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right: Student Input Sources (5 cols) -->
+            <div class="lg:col-span-5 bg-white p-4 rounded-2xl border border-slate-200 flex flex-col justify-between shadow-sm space-y-3">
+              <div>
+                <div class="flex items-center justify-between border-b pb-2 mb-3">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <span>👥</span> <span>ប្រភពទិន្នន័យសិស្ស</span>
+                  </h4>
+                  <span id="examCandidateCountBadge" class="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">
+                    សិស្ស៖ ០ នាក់
+                  </span>
+                </div>
+
+                <!-- Input Method Sub-Tabs -->
+                <div class="flex border-b border-slate-200 mb-3 text-xs" id="examSourceTabs">
+                  <button onclick="setExamSourceTab('sample')" id="tabSource-sample" class="py-1.5 px-2.5 border-b-2 font-bold border-amber-600 text-amber-700">គំរូរហ័ស</button>
+                  <button onclick="setExamSourceTab('live')" id="tabSource-live" class="py-1.5 px-2.5 border-b-2 font-medium border-transparent text-slate-500 hover:text-slate-700">Live Sheets</button>
+                  <button onclick="setExamSourceTab('upload')" id="tabSource-upload" class="py-1.5 px-2.5 border-b-2 font-medium border-transparent text-slate-500 hover:text-slate-700">Excel / CSV</button>
+                  <button onclick="setExamSourceTab('paste')" id="tabSource-paste" class="py-1.5 px-2.5 border-b-2 font-medium border-transparent text-slate-500 hover:text-slate-700">Paste Text</button>
+                </div>
+
+                <!-- Sub-tab 1: Quick Sample Generator -->
+                <div id="sourcePanel-sample" class="space-y-3">
+                  <p class="text-xs text-slate-500">បង្កើតបញ្ជីឈ្មោះសិស្សខ្មែរ-ឡាតាំង ភេទ និងថ្ងៃខែឆ្នាំកំណើតដោយស្វ័យប្រវត្តិតាមចំនួនកំណត់៖</p>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">សិស្សសរុប (នាក់)៖</label>
+                      <input type="number" id="sampleTotalCount" value="45" min="1" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-bold text-center">
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">ក្នុងនោះសិស្សស្រី (នាក់)៖</label>
+                      <input type="number" id="sampleFemaleCount" value="22" min="0" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 font-bold text-pink-600 text-center">
+                    </div>
+                  </div>
+                  <button onclick="generateSampleCandidates()" class="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <span>✨</span> <span>បង្កើតសិស្សគំរូ ៤៥ នាក់</span>
+                  </button>
+                </div>
+
+                <!-- Sub-tab 2: Live Sheets Data -->
+                <div id="sourcePanel-live" class="hidden space-y-3">
+                  <p class="text-xs text-slate-500">ទាញយកសិស្សដែលមានស្រាប់ក្នុង Google Sheets តាមសាលា និងថ្នាក់៖</p>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">ជ្រើសរើសថ្នាក់ក្នុងប្រព័ន្ធ៖</label>
+                    <select id="examLiveClassSelect" class="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                      <option value="">-- សូមជ្រើសរើសថ្នាក់ --</option>
+                    </select>
+                  </div>
+                  <button onclick="loadCandidatesFromLiveSystem()" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <span>📥</span> <span>ទាញយកទិន្នន័យសិស្សពីប្រព័ន្ធ</span>
+                  </button>
+                </div>
+
+                <!-- Sub-tab 3: Upload Excel -->
+                <div id="sourcePanel-upload" class="hidden space-y-2.5">
+                  <p class="text-xs text-slate-500">ជ្រើសរើសឯកសារបញ្ជីវត្តមានសិស្ស (.xlsx, .xls, .csv)៖</p>
+                  <label class="border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-amber-50/50 transition">
+                    <svg class="w-8 h-8 text-amber-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    <span class="text-xs font-bold text-slate-700">ចុចជ្រើសរើសឯកសារ Excel</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">គាំទ្រជួរឈរ៖ ឈ្មោះ, ភេទ, ថ្ងៃកំណើត</span>
+                    <input type="file" id="examCandidateFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExamCandidateUpload(event)">
+                  </label>
+                </div>
+
+                <!-- Sub-tab 4: Paste Text -->
+                <div id="sourcePanel-paste" class="hidden space-y-2">
+                  <p class="text-[11px] text-slate-500">បិទភ្ជាប់ (Paste) ឈ្មោះសិស្ស (មួយជួរមួយនាក់ ឬ ឈ្មោះ, ភេទ, ថ្ងៃកំណើត)៖</p>
+                  <textarea id="examPasteArea" rows="4" placeholder="ឧទាហរណ៍៖&#10;សុខ ចាន់, ប្រុស, 12/05/2014&#10;មាស ធីតា, ស្រី, 20/08/2014&#10;ចាន់ ដារ៉ា, ប្រុស, 05/01/2014" class="w-full text-xs font-mono p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 bg-slate-50"></textarea>
+                  <button onclick="parsePastedCandidates()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition">
+                    បញ្ចូលឈ្មោះសិស្ស
+                  </button>
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <div class="pt-2 border-t border-slate-100">
+                <button onclick="processRoomAllocation()" class="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span>ចុចចែកបន្ទប់ប្រឡងភ្លាមៗ</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Allocated Results & Printable View -->
+          <div id="examResultContainer" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                <h4 class="text-sm font-bold text-slate-800">លទ្ធផលបែងចែកបន្ទប់ប្រឡង</h4>
+                <span id="examRoomSummaryText" class="text-xs font-semibold text-slate-500"></span>
+              </div>
+
+              <!-- Room Tabs / Selector -->
+              <div id="examRoomFilterTabs" class="flex items-center gap-1.5 flex-wrap">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Print Area (Formatted for A4 pages) -->
+            <div id="examPrintArea" class="space-y-8 bg-slate-50/50 p-2 sm:p-4 rounded-xl border border-slate-100">
+              <div class="text-center py-12 text-slate-400 text-sm">
+                មិនទាន់មានលទ្ធផលនៅឡើយទេ សូមជ្រើសរើសប្រភពសិស្ស រួចចុច «ចុចចែកបន្ទប់ប្រឡងភ្លាមៗ»
+              </div>
+            </div>
+
+          </div>
+
+        </div>
       </div>
     </div>
   </main>
@@ -436,6 +685,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       renderDashboard();
+      initExamRoomModule();
       fetchLatestData(true);
       // Auto-poll រៀងរាល់ 15 វិនាទីម្តង
       setInterval(() => { fetchLatestData(false); }, 15000);
@@ -1241,17 +1491,38 @@
 
     function setTab(tab) {
       activeTab = tab;
-      ['students', 'staff', 'classes'].forEach(t => {
+      ['students', 'staff', 'classes', 'exam'].forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         const tbl = document.getElementById(`tbl${t.charAt(0).toUpperCase() + t.slice(1)}`);
         if (t === tab) {
-          btn.className = "px-4 py-2 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition";
-          tbl.classList.remove('hidden');
+          if (t === 'exam') {
+            btn.className = "px-4 py-2 border-b-2 font-bold text-sm border-amber-600 text-amber-600 transition flex items-center gap-1.5";
+          } else {
+            btn.className = "px-4 py-2 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition";
+          }
+          if (tbl) tbl.classList.remove('hidden');
         } else {
-          btn.className = "px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition";
-          tbl.classList.add('hidden');
+          if (btn) btn.className = "px-4 py-2 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 transition flex items-center gap-1.5";
+          if (tbl) tbl.classList.add('hidden');
         }
       });
+
+      const searchContainer = document.getElementById('searchContainer');
+      if (searchContainer) {
+        if (tab === 'exam') searchContainer.classList.add('hidden');
+        else if (!isTableHidden) searchContainer.classList.remove('hidden');
+      }
+    }
+
+    function openExamRoomAllocation() {
+      if (isTableHidden) {
+        toggleTableSection();
+      }
+      setTab('exam');
+      const target = document.getElementById('tblExam');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
     function searchCurrentTable() {
@@ -1399,6 +1670,815 @@
     function updateLastSyncTime() {
       const d = new Date();
       document.getElementById('lastSyncText').textContent = `ស្ថានភាព៖ ធ្វើបច្ចុប្បន្នភាពម៉ោង ${d.toLocaleTimeString('km-KH')}`;
+    }
+
+    // ==========================================
+    // មុខងារចែកបន្ទប់ប្រឡងផ្លូវការ (EXAM ROOM ALLOCATION)
+    // ==========================================
+
+    const TALOSENCHEY_SCHOOLS = [
+      { name: "សាលាបឋមសិក្សាតាលោ", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាព្រៃរោង", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាបឹងកក់", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាបោសគរ", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាបឹងស្តុក", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាច្រាំងចោត", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាតាំងគោក", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សារហាទិល", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាដំណាក់ត្រប់", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាបឹងត្នោត", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាសំសាន្ត", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាប្រហាល", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាសិរីគន្ធា", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាគោករំល", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាកោះវត្ត", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាកោះស្វាយ (តាលោ)", cluster: "កម្រងតាលោ" },
+      { name: "សាលាបឋមសិក្សាជ្រៃក្រឹម", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាព្រហស្ថក្បាល", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាបត់រំដួល", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាជង្រុក", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាផ្ទះរុង", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាបឹងព្រះពន្លៃ", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាកោះស្វាយ (ផ្ទះរុង)", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាកណ្តាល", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាអំពួច", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាស្តុកខ្ទុម", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាច្រាបប្រជា", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាព្រៃកន្លង់", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាក្រញ៉ាំ", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាដំណាក់កន្សែង", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាតាសាស់", cluster: "កម្រងផ្ទះរុង" },
+      { name: "សាលាបឋមសិក្សាថ្លុកដង្កោ", cluster: "កម្រងផ្ទះរុង" }
+    ];
+
+    let examCandidateList = [];
+    let examAllocatedRooms = [];
+    let activeExamRoomTab = 'ALL';
+
+    const KHMER_SURNAMES = [
+      { kh: "សុខ", en: "Sok" }, { kh: "ចាន់", en: "Chan" }, { kh: "ហេង", en: "Heng" },
+      { kh: "ឈុន", en: "Chhun" }, { kh: "ស៊ិន", en: "Sin" }, { kh: "សេង", en: "Seng" },
+      { kh: "យិន", en: "Yin" }, { kh: "លី", en: "Ly" }, { kh: "មាស", en: "Meas" },
+      { kh: "គឹម", en: "Kim" }, { kh: "រ័ត្ន", en: "Roth" }, { kh: "អ៊ុក", en: "Ouk" },
+      { kh: "ជា", en: "Chea" }, { kh: "ប៊ុន", en: "Bun" }, { kh: "ម៉ៅ", en: "Mao" },
+      { kh: "ស៊ន", en: "Sorn" }, { kh: "ជួន", en: "Chuon" }, { kh: "វ៉ាន់", en: "Van" },
+      { kh: "ញ៉ែម", en: "Nhem" }, { kh: "សរ", en: "Sar" }
+    ];
+
+    const KHMER_MALES = [
+      { kh: "ដារ៉ា", en: "Dara" }, { kh: "រតនា", en: "Rattana" }, { kh: "វិសាល", en: "Visal" },
+      { kh: "ពិសិដ្ឋ", en: "Piseth" }, { kh: "វិបុល", en: "Vibol" }, { kh: "រដ្ឋា", en: "Ratha" },
+      { kh: "សុវណ្ណ", en: "Sovann" }, { kh: "មករា", en: "Makara" }, { kh: "វីរៈ", en: "Virak" },
+      { kh: "ភារុណ", en: "Pharun" }, { kh: "សីហា", en: "Seyha" }, { kh: "កុសល", en: "Kosal" },
+      { kh: "បញ្ញា", en: "Panha" }, { kh: "សម្បត្តិ", en: "Sambath" }, { kh: "ចិន្តា", en: "Chinda" }
+    ];
+
+    const KHMER_FEMALES = [
+      { kh: "សោភា", en: "Sophea" }, { kh: "ស្រីមុំ", en: "Sreymom" }, { kh: "ធីតា", en: "Thida" },
+      { kh: "គន្ធា", en: "Kunthea" }, { kh: "ម៉ាលី", en: "Maly" }, { kh: "ស្រីណែត", en: "Sreynet" },
+      { kh: "ណារី", en: "Nary" }, { kh: "ពិសី", en: "Pisey" }, { kh: "សុភ័ក្ត្រ", en: "Sopheak" },
+      { kh: "រចនា", en: "Rachana" }, { kh: "កល្យាណ", en: "Kalyan" }, { kh: "លក្ខិណា", en: "Leakhena" },
+      { kh: "ទេវី", en: "Devi" }, { kh: "សុគន្ធា", en: "Sokunthea" }, { kh: "បុប្ផា", en: "Bopha" }
+    ];
+
+    function initExamRoomModule() {
+      populateExamSchoolsDropdown();
+      updateAllocModeUI();
+      generateSampleCandidates();
+    }
+
+    function populateExamSchoolsDropdown() {
+      const select = document.getElementById('examSchoolSelect');
+      if (!select) return;
+      select.innerHTML = '';
+      
+      TALOSENCHEY_SCHOOLS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = `${s.name} (${s.cluster})`;
+        select.appendChild(opt);
+      });
+
+      const defaultSchool = "សាលាបឋមសិក្សាថ្លុកដង្កោ";
+      select.value = defaultSchool;
+      onExamSchoolChange();
+    }
+
+    function onExamSchoolChange() {
+      const select = document.getElementById('examSchoolSelect');
+      if (!select) return;
+      const schoolName = select.value;
+      const found = TALOSENCHEY_SCHOOLS.find(s => s.name === schoolName);
+      const clusterInput = document.getElementById('examClusterInput');
+      if (clusterInput) {
+        clusterInput.value = found ? found.cluster : 'កម្រងផ្ទះរុង';
+      }
+
+      updateExamLiveClassDropdown(schoolName);
+    }
+
+    function updateExamLiveClassDropdown(schoolName) {
+      const liveSelect = document.getElementById('examLiveClassSelect');
+      if (!liveSelect) return;
+      liveSelect.innerHTML = '<option value="">-- សូមជ្រើសរើសថ្នាក់ --</option>';
+
+      const cleanSchool = (schoolName || '').replace('សាលាបឋមសិក្សា', '').trim();
+      const filtered = localData.students.filter(s => {
+        const sc = (s.school || '').trim();
+        return sc.includes(cleanSchool) || cleanSchool.includes(sc);
+      });
+
+      const classSet = new Set(filtered.map(s => s.grade).filter(Boolean));
+      if (classSet.size === 0) {
+        localData.students.forEach(s => ifSchoolValid(s.grade, classSet));
+      }
+
+      classSet.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = `ថ្នាក់ ${c}`;
+        liveSelect.appendChild(opt);
+      });
+    }
+
+    function setExamSourceTab(tabName) {
+      ['sample', 'live', 'upload', 'paste'].forEach(t => {
+        const btn = document.getElementById(`tabSource-${t}`);
+        const panel = document.getElementById(`sourcePanel-${t}`);
+        if (t === tabName) {
+          btn.className = "py-1.5 px-2.5 border-b-2 font-bold border-amber-600 text-amber-700";
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = "py-1.5 px-2.5 border-b-2 font-medium border-transparent text-slate-500 hover:text-slate-700";
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function updateAllocModeUI() {
+      const perRoom = document.querySelector('input[name="examAllocMode"][value="perRoom"]');
+      const splitTwo = document.querySelector('input[name="examAllocMode"][value="splitTwo"]');
+      const customRooms = document.querySelector('input[name="examAllocMode"][value="customRooms"]');
+
+      const lPerRoom = document.getElementById('labelModePerRoom');
+      const lSplitTwo = document.getElementById('labelModeSplitTwo');
+      const lCustom = document.getElementById('labelModeCustomRooms');
+
+      if (lPerRoom && lSplitTwo && lCustom) {
+        lPerRoom.className = perRoom && perRoom.checked ? "cursor-pointer border-2 border-amber-500 rounded-xl p-3 bg-amber-50/40 transition flex flex-col justify-between shadow-sm" : "cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-400 transition flex flex-col justify-between";
+        lSplitTwo.className = splitTwo && splitTwo.checked ? "cursor-pointer border-2 border-amber-500 rounded-xl p-3 bg-amber-50/40 transition flex flex-col justify-between shadow-sm" : "cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-400 transition flex flex-col justify-between";
+        lCustom.className = customRooms && customRooms.checked ? "cursor-pointer border-2 border-amber-500 rounded-xl p-3 bg-amber-50/40 transition flex flex-col justify-between shadow-sm" : "cursor-pointer border border-slate-300 rounded-xl p-3 bg-white hover:border-amber-400 transition flex flex-col justify-between";
+      }
+    }
+
+    function updateCandidateCountBadge() {
+      const badge = document.getElementById('examCandidateCountBadge');
+      const fCount = examCandidateList.filter(s => s.gender === 'ស្រី').length;
+      if (badge) {
+        badge.textContent = `សិស្ស៖ ${examCandidateList.length} នាក់ (ស្រី ${fCount} នាក់)`;
+      }
+    }
+
+    function generateSampleCandidates() {
+      const totInput = document.getElementById('sampleTotalCount');
+      const femInput = document.getElementById('sampleFemaleCount');
+      const total = Math.max(1, parseInt(totInput ? totInput.value : 45, 10) || 45);
+      const female = Math.min(total, Math.max(0, parseInt(femInput ? femInput.value : 22, 10) || 22));
+      const male = total - female;
+
+      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦-ក';
+      const list = [];
+
+      for (let i = 0; i < male; i++) {
+        const s = KHMER_SURNAMES[i % KHMER_SURNAMES.length];
+        const g = KHMER_MALES[i % KHMER_MALES.length];
+        const day = String((i % 28) + 1).padStart(2, '0');
+        const month = String(((i * 3) % 12) + 1).padStart(2, '0');
+        list.push({
+          nameKh: `${s.kh} ${g.kh}`,
+          nameEn: `${s.en} ${g.en}`,
+          gender: 'ប្រុស',
+          dob: `${day}/${month}/2014`,
+          originClass: grade
+        });
+      }
+
+      for (let i = 0; i < female; i++) {
+        const s = KHMER_SURNAMES[(i + 5) % KHMER_SURNAMES.length];
+        const g = KHMER_FEMALES[i % KHMER_FEMALES.length];
+        const day = String((i % 28) + 1).padStart(2, '0');
+        const month = String(((i * 2 + 1) % 12) + 1).padStart(2, '0');
+        list.push({
+          nameKh: `${s.kh} ${g.kh}`,
+          nameEn: `${s.en} ${g.en}`,
+          gender: 'ស្រី',
+          dob: `${day}/${month}/2014`,
+          originClass: grade
+        });
+      }
+
+      list.sort((a, b) => a.nameKh.localeCompare(b.nameKh, 'km'));
+      examCandidateList = list;
+      updateCandidateCountBadge();
+      processRoomAllocation();
+    }
+
+    function loadCandidatesFromLiveSystem() {
+      const classSelect = document.getElementById('examLiveClassSelect');
+      const grade = classSelect ? classSelect.value : '';
+      const school = document.getElementById('examSchoolSelect').value;
+      const cleanSchool = (school || '').replace('សាលាបឋមសិក្សា', '').trim();
+
+      let matched = localData.students.filter(s => {
+        const sc = (s.school || '').trim();
+        const matchesSchool = sc.includes(cleanSchool) || cleanSchool.includes(sc);
+        const matchesClass = !grade || s.grade === grade;
+        return matchesSchool && matchesClass;
+      });
+
+      if (matched.length === 0 && grade) {
+        matched = localData.students.filter(s => s.grade === grade);
+      }
+
+      if (matched.length === 0) {
+        alert('មិនទាន់មានទិន្នន័យសិស្សសម្រាប់សាលា ឬថ្នាក់នេះនៅឡើយទេ! សូមប្រើជម្រើស «បង្កើតសិស្សគំរូរហ័ស» ឬ «នាំចូល Excel»។');
+        return;
+      }
+
+      examCandidateList = matched.map(s => ({
+        nameKh: s.name,
+        nameEn: transliterateKhmerToLatin(s.name),
+        gender: s.gender || 'ប្រុស',
+        dob: s.dob || '—',
+        originClass: s.grade || grade || 'ថ្នាក់ទី ៦'
+      }));
+
+      updateCandidateCountBadge();
+      showToast(`បានទាញយកសិស្សចំនួន ${examCandidateList.length} នាក់ពីប្រព័ន្ធ!`);
+      processRoomAllocation();
+    }
+
+    function handleExamCandidateUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          const candidates = [];
+          const curGrade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0) continue;
+            
+            let nameVal = '';
+            let genderVal = 'ប្រុស';
+            let dobVal = '—';
+            let latinVal = '';
+
+            for (let c = 0; c < row.length; c++) {
+              const cell = String(row[c] || '').trim();
+              if (!cell) continue;
+              if (cell === 'ឈ្មោះ' || cell === 'នាមត្រកូល និងនាម' || cell === 'ល.រ') continue;
+
+              if (cell === 'ស្រី' || cell === 'ស' || cell === 'F' || cell === 'Female') genderVal = 'ស្រី';
+              else if (cell === 'ប្រុស' || cell === 'ប' || cell === 'M' || cell === 'Male') genderVal = 'ប្រុស';
+              else if (cell instanceof Date) {
+                dobVal = `${String(cell.getDate()).padStart(2, '0')}/${String(cell.getMonth()+1).padStart(2, '0')}/${cell.getFullYear()}`;
+              } else if (cell.includes('/') || (cell.includes('-') && cell.length >= 8)) {
+                dobVal = cell;
+              } else if (/^[A-Za-z\s]+$/.test(cell) && cell.length > 2) {
+                latinVal = cell;
+              } else if (/[\u1780-\u17FF]/.test(cell) && cell.length >= 3 && !nameVal) {
+                nameVal = cell;
+              }
+            }
+
+            if (nameVal && !nameVal.includes('សរុប') && !nameVal.includes('ថ្នាក់')) {
+              candidates.push({
+                nameKh: nameVal,
+                nameEn: latinVal || transliterateKhmerToLatin(nameVal),
+                gender: genderVal,
+                dob: dobVal,
+                originClass: curGrade
+              });
+            }
+          }
+
+          if (candidates.length > 0) {
+            examCandidateList = candidates;
+            updateCandidateCountBadge();
+            showToast(`បានបញ្ចូលសិស្សចំនួន ${candidates.length} នាក់ពីឯកសារ Excel!`);
+            processRoomAllocation();
+          } else {
+            alert('ពុំមានទិន្នន័យឈ្មោះសិស្សត្រឹមត្រូវក្នុងឯកសារនេះទេ!');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('បញ្ហាក្នុងការអានឯកសារ Excel: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      event.target.value = '';
+    }
+
+    function parsePastedCandidates() {
+      const text = document.getElementById('examPasteArea').value;
+      if (!text.trim()) {
+        alert('សូមបញ្ចូល ឬបិទភ្ជាប់ឈ្មោះសិស្សក្នុងប្រអប់ជាមុនសិន!');
+        return;
+      }
+
+      const lines = text.split('\n');
+      const curGrade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+      const list = [];
+
+      lines.forEach(line => {
+        const clean = line.trim();
+        if (!clean) return;
+        const parts = clean.split(/[,;\t]+/).map(p => p.trim());
+        const name = parts[0] || '';
+        let gender = 'ប្រុស';
+        let dob = '—';
+
+        if (parts[1]) {
+          if (parts[1] === 'ស្រី' || parts[1] === 'ស' || parts[1].toLowerCase() === 'f') gender = 'ស្រី';
+          else gender = 'ប្រុស';
+        }
+        if (parts[2]) {
+          dob = parts[2];
+        }
+
+        if (name) {
+          list.push({
+            nameKh: name,
+            nameEn: transliterateKhmerToLatin(name),
+            gender: gender,
+            dob: dob,
+            originClass: curGrade
+          });
+        }
+      });
+
+      if (list.length > 0) {
+        examCandidateList = list;
+        updateCandidateCountBadge();
+        showToast(`បានបញ្ចូលសិស្សចំនួន ${list.length} នាក់!`);
+        processRoomAllocation();
+      }
+    }
+
+    function transliterateKhmerToLatin(khName) {
+      if (!khName) return '';
+      let res = String(khName).trim();
+      KHMER_SURNAMES.forEach(item => {
+        res = res.replace(new RegExp(`^${item.kh}\\s*`), `${item.en} `);
+      });
+      KHMER_MALES.concat(KHMER_FEMALES).forEach(item => {
+        res = res.replace(new RegExp(`\\s*${item.kh}$`), ` ${item.en}`);
+      });
+      return res;
+    }
+
+    function processRoomAllocation() {
+      if (!examCandidateList || examCandidateList.length === 0) {
+        alert('សូមបញ្ចូលទិន្នន័យសិស្សជាមុនសិន (បង្កើតគំរូ, នាំចូល Excel, ឬ Paste ឈ្មោះ)!');
+        return;
+      }
+
+      const modeRadio = document.querySelector('input[name="examAllocMode"]:checked');
+      const mode = modeRadio ? modeRadio.value : 'perRoom';
+      const totalCandidates = examCandidateList.length;
+
+      let roomSizes = [];
+
+      if (mode === 'splitTwo') {
+        const half = Math.ceil(totalCandidates / 2);
+        roomSizes = [half, totalCandidates - half];
+      } else if (mode === 'customRooms') {
+        const countInput = document.getElementById('examCustomRoomsCount');
+        const numRooms = Math.max(1, parseInt(countInput ? countInput.value : 2, 10) || 2);
+        const base = Math.floor(totalCandidates / numRooms);
+        const remainder = totalCandidates % numRooms;
+        for (let i = 0; i < numRooms; i++) {
+          roomSizes.push(base + (i < remainder ? 1 : 0));
+        }
+      } else {
+        const perRoomInput = document.getElementById('examPerRoomCount');
+        const perRoom = Math.max(1, parseInt(perRoomInput ? perRoomInput.value : 20, 10) || 20);
+        let rem = totalCandidates;
+        while (rem > 0) {
+          const take = Math.min(perRoom, rem);
+          roomSizes.push(take);
+          rem -= take;
+        }
+      }
+
+      let curIndex = 0;
+      examAllocatedRooms = roomSizes.map((size, roomIdx) => {
+        const slice = examCandidateList.slice(curIndex, curIndex + size);
+        curIndex += size;
+        const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+        const roomNoKh = String(roomIdx + 1).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
+        
+        const students = slice.map((st, idx) => {
+          const seatNo = String(idx + 1).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
+          const candId = `TLC-${String(curIndex - size + idx + 1).padStart(3, '0')}`;
+          return {
+            ...st,
+            seatNo: seatNo,
+            candidateId: candId
+          };
+        });
+
+        const femaleCount = students.filter(s => s.gender === 'ស្រី').length;
+
+        return {
+          roomNumber: roomIdx + 1,
+          roomName: `បន្ទប់លេខ ${roomNoKh}`,
+          roomNoKh: roomNoKh,
+          students: students,
+          femaleCount: femaleCount
+        };
+      });
+
+      renderRoomFilterTabs();
+      renderExamRoomsHTML();
+
+      const summaryText = document.getElementById('examRoomSummaryText');
+      if (summaryText) {
+        summaryText.textContent = `| បេក្ខជនសរុប៖ ${totalCandidates} នាក់ | ចែកបាន៖ ${examAllocatedRooms.length} បន្ទប់`;
+      }
+    }
+
+    function renderRoomFilterTabs() {
+      const container = document.getElementById('examRoomFilterTabs');
+      if (!container) return;
+
+      let html = `
+        <button onclick="setExamRoomFilter('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${activeExamRoomTab === 'ALL' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+          បន្ទប់ទាំងអស់ (${examAllocatedRooms.length})
+        </button>
+      `;
+
+      examAllocatedRooms.forEach((r, idx) => {
+        const isActive = activeExamRoomTab === idx;
+        html += `
+          <button onclick="setExamRoomFilter(${idx})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${isActive ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+            ${r.roomName} (${r.students.length})
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function setExamRoomFilter(tabIdx) {
+      activeExamRoomTab = tabIdx;
+      renderRoomFilterTabs();
+      renderExamRoomsHTML();
+    }
+
+    function renderExamRoomsHTML() {
+      const printArea = document.getElementById('examPrintArea');
+      if (!printArea) return;
+
+      if (!examAllocatedRooms || examAllocatedRooms.length === 0) {
+        printArea.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm">មិនទាន់មានលទ្ធផលនៅឡើយទេ</div>';
+        return;
+      }
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+
+      const roomsToShow = activeExamRoomTab === 'ALL' 
+        ? examAllocatedRooms 
+        : [examAllocatedRooms[activeExamRoomTab]];
+
+      let pagesHtml = '';
+
+      roomsToShow.forEach(room => {
+        let rowsHtml = '';
+        room.students.forEach((s) => {
+          rowsHtml += `
+            <tr class="hover:bg-amber-50/40 transition">
+              <td class="text-center font-bold text-slate-800">${s.seatNo}</td>
+              <td class="text-center font-mono font-semibold text-indigo-700">${s.candidateId}</td>
+              <td class="text-left pl-3 font-semibold text-slate-900">${s.nameKh}</td>
+              <td class="text-left pl-3 font-medium text-slate-700">${s.nameEn}</td>
+              <td class="text-center font-semibold ${s.gender === 'ស្រី' ? 'text-pink-600' : 'text-blue-700'}">${s.gender}</td>
+              <td class="text-center text-slate-600 font-mono">${s.dob}</td>
+              <td class="text-center text-slate-700">${s.originClass}</td>
+              <td class="text-center text-slate-300">.......................</td>
+            </tr>
+          `;
+        });
+
+        pagesHtml += `
+          <div class="exam-room-page bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            
+            <div class="flex justify-between items-start border-b border-slate-300 pb-3">
+              <div class="text-left text-xs font-semibold space-y-0.5 text-slate-800">
+                <p class="font-bold text-sm text-slate-900">រដ្ឋបាលស្រុកតាលោសែនជ័យ</p>
+                <p>ការិយាល័យអប់រំ យុវជន និងកីឡា</p>
+                <p>កម្រង៖ <span class="font-bold text-indigo-800">${cluster}</span></p>
+                <p>សាលាបឋមសិក្សា៖ <span class="font-bold text-slate-900">${school}</span></p>
+              </div>
+
+              <div class="text-center font-bold text-xs space-y-0.5 text-slate-900">
+                <p class="text-sm">ព្រះរាជាណាចក្រកម្ពុជា</p>
+                <p>ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+                <div class="flex justify-center pt-0.5">
+                  <svg class="w-16 h-2 text-slate-700" viewBox="0 0 100 10" fill="none"><path d="M0 5 Q 25 0, 50 5 T 100 5" stroke="currentColor" stroke-width="2"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center my-3">
+              <h2 class="text-base sm:text-lg font-bold text-slate-900 uppercase tracking-wide">
+                បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង
+              </h2>
+              <div class="flex flex-wrap justify-center items-center gap-3 text-xs font-medium text-slate-700 mt-1">
+                <span>សម័យប្រឡង៖ <strong class="text-slate-900">${examSession}</strong></span>
+                <span>•</span>
+                <span>ថ្នាក់ទី៖ <strong class="text-slate-900">${grade}</strong></span>
+                <span>•</span>
+                <span class="px-2.5 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">${room.roomName}</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">
+                បេក្ខជនសរុប៖ <strong class="text-indigo-700">${room.students.length}</strong> នាក់ 
+                (សិស្សស្រី៖ <strong class="text-pink-600">${room.femaleCount}</strong> នាក់)
+              </p>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full exam-table border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-100 text-slate-800">
+                    <th style="width: 55px;">លេខតុ</th>
+                    <th style="width: 85px;">អត្តលេខ</th>
+                    <th style="text-align: left; padding-left: 10px;">គោត្តនាម-នាម</th>
+                    <th style="text-align: left; padding-left: 10px;">អក្សរឡាតាំង</th>
+                    <th style="width: 55px;">ភេទ</th>
+                    <th style="width: 95px;">ថ្ងៃខែឆ្នាំកំណើត</th>
+                    <th style="width: 80px;">ថ្នាក់ដើម</th>
+                    <th style="width: 120px;">ហត្ថលេខាបេក្ខជន</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="flex justify-between items-start pt-6 px-4 text-xs font-semibold text-slate-800">
+              <div class="text-center w-56">
+                <p class="font-bold">បានឃើញ និងឯកភាព</p>
+                <p class="font-bold text-slate-900">នាយកសាលា</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">(ហត្ថលេខា និងត្រា)</p>
+                <div class="h-16"></div>
+              </div>
+
+              <div class="text-center w-64">
+                <p>${location}, ${footerDate}</p>
+                <p class="font-bold text-slate-900">អ្នករៀបចំតារាង</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">(ហត្ថលេខា និងឈ្មោះ)</p>
+                <div class="h-16"></div>
+              </div>
+            </div>
+
+          </div>
+        `;
+      });
+
+      printArea.innerHTML = pagesHtml;
+    }
+
+    function exportExamRoomsWord() {
+      if (!examAllocatedRooms || examAllocatedRooms.length === 0) {
+        alert('សូមចែកបន្ទប់ប្រឡងជាមុនសិន!');
+        return;
+      }
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+
+      let docBody = '';
+
+      examAllocatedRooms.forEach((room, roomIdx) => {
+        let rows = '';
+        room.students.forEach(s => {
+          rows += `
+            <tr>
+              <td style="text-align:center; font-weight:bold;">${s.seatNo}</td>
+              <td style="text-align:center;">${s.candidateId}</td>
+              <td style="text-align:left; padding-left:5px; font-weight:bold;">${s.nameKh}</td>
+              <td style="text-align:left; padding-left:5px;">${s.nameEn}</td>
+              <td style="text-align:center;">${s.gender}</td>
+              <td style="text-align:center;">${s.dob}</td>
+              <td style="text-align:center;">${s.originClass}</td>
+              <td style="text-align:center;">&nbsp;</td>
+            </tr>
+          `;
+        });
+
+        const isLast = roomIdx === examAllocatedRooms.length - 1;
+        const pageBreak = isLast ? '' : '<div style="page-break-after:always; mso-break-type:section-break;"></div>';
+
+        docBody += `
+          <div style="font-family:'Kantumruy Pro','Khmer OS Siemreap',Arial,sans-serif; margin-bottom:20px;">
+            <table style="width:100%; border:none; margin-bottom:10px;">
+              <tr>
+                <td style="border:none; text-align:left; width:50%; font-size:11pt; line-height:1.4;">
+                  <strong>រដ្ឋបាលស្រុកតាលោសែនជ័យ</strong><br>
+                  ការិយាល័យអប់រំ យុវជន និងកីឡា<br>
+                  កម្រង៖ <strong>${cluster}</strong><br>
+                  សាលាបឋមសិក្សា៖ <strong>${school}</strong>
+                </td>
+                <td style="border:none; text-align:center; width:50%; font-size:11pt; line-height:1.4;">
+                  <strong>ព្រះរាជាណាចក្រកម្ពុជា</strong><br>
+                  <strong>ជាតិ សាសនា ព្រះមហាក្សត្រ</strong><br>
+                  ---------------------
+                </td>
+              </tr>
+            </table>
+
+            <div style="text-align:center; margin:15px 0;">
+              <h2 style="font-size:14pt; font-weight:bold; margin:0;">បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង</h2>
+              <p style="font-size:10.5pt; margin:5px 0;">
+                សម័យប្រឡង៖ <strong>${examSession}</strong> &nbsp; | &nbsp; ថ្នាក់ទី៖ <strong>${grade}</strong> &nbsp; | &nbsp; <strong>${room.roomName}</strong>
+              </p>
+              <p style="font-size:10pt; margin:3px 0;">
+                បេក្ខជនសរុប៖ <strong>${room.students.length}</strong> នាក់ (ស្រី <strong>${room.femaleCount}</strong> នាក់)
+              </p>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:10pt;" border="1">
+              <thead>
+                <tr style="background-color:#f1f5f9; font-weight:bold;">
+                  <th style="width:40px; padding:6px;">លេខតុ</th>
+                  <th style="width:65px; padding:6px;">អត្តលេខ</th>
+                  <th style="padding:6px; text-align:left;">គោត្តនាម-នាម</th>
+                  <th style="padding:6px; text-align:left;">អក្សរឡាតាំង</th>
+                  <th style="width:45px; padding:6px;">ភេទ</th>
+                  <th style="width:75px; padding:6px;">ថ្ងៃខែឆ្នាំកំណើត</th>
+                  <th style="width:65px; padding:6px;">ថ្នាក់ដើម</th>
+                  <th style="width:90px; padding:6px;">ហត្ថលេខាបេក្ខជន</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+
+            <table style="width:100%; border:none; margin-top:25px; font-size:11pt;">
+              <tr>
+                <td style="border:none; text-align:center; width:50%;">
+                  <strong>បានឃើញ និងឯកភាព</strong><br>
+                  <strong>នាយកសាលា</strong><br>
+                  <span style="font-size:9pt; color:#666;">(ហត្ថលេខា និងត្រា)</span>
+                  <div style="height:60px;"></div>
+                </td>
+                <td style="border:none; text-align:center; width:50%;">
+                  ${location}, ${footerDate}<br>
+                  <strong>អ្នករៀបចំតារាង</strong><br>
+                  <span style="font-size:9pt; color:#666;">(ហត្ថលេខា និងឈ្មោះ)</span>
+                  <div style="height:60px;"></div>
+                </td>
+              </tr>
+            </table>
+          </div>
+          ${pageBreak}
+        `;
+      });
+
+      const docContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>បញ្ជីចែកបន្ទប់ប្រឡង</title>
+          <!--[if gte mso 9]>
+          <xml>
+            <w:WordDocument>
+              <w:View>Print</w:View>
+              <w:Zoom>100</w:Zoom>
+              <w:DoNotOptimizeForBrowser/>
+            </w:WordDocument>
+          </xml>
+          <![endif]-->
+          <style>
+            @page {
+              size: 21.0cm 29.7cm;
+              margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+              mso-page-orientation: portrait;
+            }
+            body {
+              font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', 'Segoe UI', Arial, sans-serif;
+            }
+            table {
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid #333333;
+              padding: 5px;
+            }
+          </style>
+        </head>
+        <body>
+          ${docBody}
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${grade}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('បានទាញយកឯកសារ Word (.doc) ជោគជ័យ!');
+    }
+
+    function exportExamRoomsExcel() {
+      if (!examAllocatedRooms || examAllocatedRooms.length === 0) {
+        alert('សូមចែកបន្ទប់ប្រឡងជាមុនសិន!');
+        return;
+      }
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+
+      const wb = XLSX.utils.book_new();
+
+      examAllocatedRooms.forEach((room, roomIdx) => {
+        const rows = [
+          ['រដ្ឋបាលស្រុកតាលោសែនជ័យ', '', '', '', '', '', 'ព្រះរាជាណាចក្រកម្ពុជា'],
+          ['ការិយាល័យអប់រំ យុវជន និងកីឡា', '', '', '', '', '', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'],
+          [`កម្រង៖ ${cluster}`, '', '', '', '', '', ''],
+          [`សាលាបឋមសិក្សា៖ ${school}`, '', '', '', '', '', ''],
+          [''],
+          ['បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង'],
+          [`សម័យប្រឡង៖ ${examSession}    ថ្នាក់ទី៖ ${grade}    ${room.roomName}`],
+          [`បេក្ខជនសរុប៖ ${room.students.length} នាក់ (ស្រី ${room.femaleCount} នាក់)`],
+          [''],
+          ['លេខតុ', 'អត្តលេខ', 'គោត្តនាម-នាម', 'អក្សរឡាតាំង', 'ភេទ', 'ថ្ងៃខែឆ្នាំកំណើត', 'ថ្នាក់ដើម', 'ហត្ថលេខាបេក្ខជន']
+        ];
+
+        room.students.forEach(s => {
+          rows.push([
+            s.seatNo,
+            s.candidateId,
+            s.nameKh,
+            s.nameEn,
+            s.gender,
+            s.dob,
+            s.originClass,
+            ''
+          ]);
+        });
+
+        rows.push(
+          [''],
+          ['បានឃើញ និងឯកភាព', '', '', '', '', `${location}, ${footerDate}`],
+          ['នាយកសាលា', '', '', '', '', 'អ្នករៀបចំតារាង'],
+          ['(ហត្ថលេខា និងត្រា)', '', '', '', '', '(ហត្ថលេខា និងឈ្មោះ)']
+        );
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, `បន្ទប់ ${String(roomIdx + 1).padStart(2, '0')}`);
+      });
+
+      XLSX.writeFile(wb, `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${grade}.xlsx`);
+      showToast('បានទាញយក Excel (.xlsx) តាមបន្ទប់ដាច់ដោយឡែកជោគជ័យ!');
+    }
+
+    function printExamRooms() {
+      if (!examAllocatedRooms || examAllocatedRooms.length === 0) {
+        alert('សូមចែកបន្ទប់ប្រឡងជាមុនសិន!');
+        return;
+      }
+      window.print();
     }
   </script>
 </body>
