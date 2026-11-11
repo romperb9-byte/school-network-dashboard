@@ -878,6 +878,9 @@
           updateSchoolDropdown();
           renderDashboard();
           updateLastSyncTime();
+          if (typeof loadStaffFromLiveSystem === 'function') {
+            loadStaffFromLiveSystem(false);
+          }
           if (isManual) showToast('ទិន្នន័យបានធ្វើបច្ចុប្បន្នភាព!');
         }
       } else if (res && res.status === 'error') {
@@ -1854,6 +1857,7 @@
     let activeExamView = 'STUDENTS'; // 'STUDENTS' | 'STAFF'
     let activeExamGradeFilter = 'ALL';
     let activeExamRoomTab = 'ALL';
+    let activeExamRoomRange = { from: 1, to: 3 };
 
     const PRIMARY_GRADES = ['ថ្នាក់ទី ១', 'ថ្នាក់ទី ២', 'ថ្នាក់ទី ៣', 'ថ្នាក់ទី ៤', 'ថ្នាក់ទី ៥', 'ថ្នាក់ទី ៦'];
 
@@ -1888,7 +1892,7 @@
       updateAllocModeUI();
       onExamGradeScopeChange();
       generateSampleCandidates();
-      generateSampleStaff();
+      loadStaffFromLiveSystem(false);
     }
 
     function populateExamSchoolsDropdown() {
@@ -2465,7 +2469,7 @@
       if (badgeRoom) badgeRoom.textContent = `${examAllocatedRooms.length} បន្ទប់`;
 
       if (!examStaffList || examStaffList.length === 0) {
-        generateSampleStaff();
+        loadStaffFromLiveSystem(false);
       } else {
         processStaffAllocation();
       }
@@ -2538,32 +2542,132 @@
       renderExamRoomsHTML();
     }
 
+    function getFilteredExamRoomsPool() {
+      if (activeExamGradeFilter !== 'ALL') {
+        return examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      }
+      return examAllocatedRooms || [];
+    }
+
+    function getRoomsToShow() {
+      const pool = getFilteredExamRoomsPool();
+      if (!pool || pool.length === 0) return [];
+
+      if (activeExamRoomTab === 'RANGE') {
+        const from = Math.max(1, activeExamRoomRange.from || 1);
+        const to = Math.min(pool.length, Math.max(from, activeExamRoomRange.to || pool.length));
+        return pool.filter((r, idx) => {
+          const num = idx + 1;
+          return num >= from && num <= to;
+        });
+      } else if (activeExamRoomTab === 'ALL') {
+        return pool;
+      } else {
+        const idx = parseInt(activeExamRoomTab, 10);
+        return pool[idx] ? [pool[idx]] : pool;
+      }
+    }
+
     function renderRoomFilterTabs() {
       const container = document.getElementById('examRoomFilterTabs');
       if (!container) return;
 
-      let filteredRooms = examAllocatedRooms;
-      if (activeExamGradeFilter !== 'ALL') {
-        filteredRooms = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      const filteredRooms = getFilteredExamRoomsPool();
+      const tot = filteredRooms.length;
+
+      if (tot === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400">មិនទាន់មានបន្ទប់ប្រឡងនៅឡើយទេ</span>';
+        return;
       }
 
-      let html = `
+      // Ensure range bounds stay within pool
+      if (activeExamRoomRange.to > tot) {
+        activeExamRoomRange.to = Math.max(1, tot);
+      }
+      if (activeExamRoomRange.from > tot) {
+        activeExamRoomRange.from = 1;
+      }
+
+      const isRangeActive = activeExamRoomTab === 'RANGE';
+
+      let html = '';
+
+      // ១. ប៊ូតុង "បន្ទប់ទាំងអស់"
+      html += `
         <button onclick="setExamRoomFilter('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${activeExamRoomTab === 'ALL' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
-          បន្ទប់ទាំងអស់ (${filteredRooms.length})
+          បន្ទប់ទាំងអស់ (${tot})
         </button>
       `;
 
+      // ២. ប្រអប់ជ្រើសជាចន្លោះបន្ទប់ (Range Selector: ឧ. 1 ដល់ 3)
+      html += `
+        <div class="inline-flex items-center gap-1.5 bg-amber-50/90 border ${isRangeActive ? 'border-amber-500 ring-2 ring-amber-400/50 shadow-sm' : 'border-amber-200'} rounded-xl px-2.5 py-1 text-xs">
+          <span class="font-bold text-amber-900 flex items-center gap-1">📐 <span>ចន្លោះបន្ទប់៖</span></span>
+          <span class="text-slate-600 text-[11px]">ពីបន្ទប់</span>
+          <input type="number" id="examRoomRangeFrom" min="1" max="${tot}" value="${activeExamRoomRange.from}" onchange="applyExamRoomRangeInput()" class="w-12 text-center text-xs font-bold bg-white border border-slate-300 rounded p-0.5 outline-none focus:ring-1 focus:ring-amber-500">
+          <span class="text-slate-600 text-[11px]">ដល់</span>
+          <input type="number" id="examRoomRangeTo" min="1" max="${tot}" value="${activeExamRoomRange.to}" onchange="applyExamRoomRangeInput()" class="w-12 text-center text-xs font-bold bg-white border border-slate-300 rounded p-0.5 outline-none focus:ring-1 focus:ring-amber-500">
+          <button type="button" onclick="applyExamRoomRangeInput()" class="px-2.5 py-0.5 bg-amber-600 hover:bg-amber-500 text-white rounded text-[11px] font-bold shadow-sm transition">
+            អនុវត្ត
+          </button>
+        </div>
+      `;
+
+      // ៣. ប៊ូតុងផ្លូវកាត់ចន្លោះរហ័ស (Quick Range Preset Pills: ឧ. 1 ដល់ 3, 4 ដល់ 6)
+      if (tot >= 3) {
+        const step = 3;
+        for (let s = 1; s <= tot; s += step) {
+          const e = Math.min(tot, s + step - 1);
+          const isPresetActive = isRangeActive && activeExamRoomRange.from === s && activeExamRoomRange.to === e;
+          html += `
+            <button onclick="setExamRoomRange(${s}, ${e})" title="ជ្រើសចន្លោះពីបន្ទប់ទី ${s} ដល់ ទី ${e}" class="px-2 py-1 rounded-lg text-xs font-bold transition ${isPresetActive ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-300' : 'bg-amber-100/70 text-amber-900 hover:bg-amber-200'}">
+              ${s} ដល់ ${e}
+            </button>
+          `;
+        }
+      }
+
+      // ៤. ប៊ូតុងបន្ទប់នីមួយៗដាច់ដោយឡែក
       filteredRooms.forEach((r, idx) => {
         const isActive = activeExamRoomTab === idx;
         const label = activeExamGradeFilter === 'ALL' ? r.fullTitle : r.roomName;
         html += `
           <button onclick="setExamRoomFilter(${idx})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${isActive ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
-            ${label} (${r.students.length})
+            ${label}
           </button>
         `;
       });
 
+      // ៥. ស្លាកព័ត៌មានបញ្ជាក់ពេលកំពុងជ្រើសជាចន្លោះ
+      if (isRangeActive) {
+        const shown = getRoomsToShow();
+        html += `
+          <span class="text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+            📍 កំពុងជ្រើសចន្លោះ៖ បន្ទប់ទី ${activeExamRoomRange.from} ដល់ ទី ${activeExamRoomRange.to} (សរុប ${shown.length} បន្ទប់)
+          </span>
+        `;
+      }
+
       container.innerHTML = html;
+    }
+
+    function applyExamRoomRangeInput() {
+      const fromEl = document.getElementById('examRoomRangeFrom');
+      const toEl = document.getElementById('examRoomRangeTo');
+      const pool = getFilteredExamRoomsPool();
+      const maxRooms = pool.length || 1;
+      let from = parseInt(fromEl ? fromEl.value : 1, 10) || 1;
+      let to = parseInt(toEl ? toEl.value : 3, 10) || 3;
+      from = Math.max(1, Math.min(from, maxRooms));
+      to = Math.max(from, Math.min(to, maxRooms));
+      setExamRoomRange(from, to);
+    }
+
+    function setExamRoomRange(from, to) {
+      activeExamRoomRange = { from, to };
+      activeExamRoomTab = 'RANGE';
+      renderRoomFilterTabs();
+      renderExamRoomsHTML();
     }
 
     function setExamRoomFilter(tabIdx) {
@@ -2587,14 +2691,12 @@
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
-      let pool = examAllocatedRooms;
-      if (activeExamGradeFilter !== 'ALL') {
-        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
-      }
+      const roomsToShow = getRoomsToShow();
 
-      const roomsToShow = activeExamRoomTab === 'ALL' 
-        ? pool 
-        : (pool[activeExamRoomTab] ? [pool[activeExamRoomTab]] : pool);
+      if (!roomsToShow || roomsToShow.length === 0) {
+        printArea.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm">គ្មានបន្ទប់ប្រឡងក្នុងចន្លោះដែលបានជ្រើសនេះទេ</div>';
+        return;
+      }
 
       let pagesHtml = '';
 
@@ -2652,14 +2754,14 @@
               </p>
             </div>
 
-            <!-- Room Proctors Box -->
+            <!-- Room Proctors Box (គ្រូអនុរក្សក្នុងសាលាដែលបានចាត់តាំង) -->
             <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800">
               <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold text-[11px]">គណៈកម្មការអនុរក្ស</span>
-                <span class="inline-flex items-center gap-1">👨‍🏫 <strong>អនុរក្សទី ១៖</strong> ${room.proctor1 ? room.proctor1.name : '<span class="text-slate-400 font-normal">មិនទាន់ចាត់តាំង</span>'} ${room.proctor1 && room.proctor1.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor1.phone})</span>` : ''}</span>
+                <span class="inline-flex items-center gap-1">👨‍🏫 <strong>អនុរក្សទី ១៖</strong> ${room.proctor1 ? room.proctor1.name : '<span class="text-slate-400 font-normal">(មិនទាន់ចាត់តាំង)</span>'} ${room.proctor1 && room.proctor1.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor1.phone})</span>` : ''}</span>
               </div>
               <div class="inline-flex items-center gap-1">
-                <span>👩‍🏫 <strong>អនុរក្សទី ២៖</strong> ${room.proctor2 ? room.proctor2.name : '<span class="text-slate-400 font-normal">មិនទាន់ចាត់តាំង</span>'} ${room.proctor2 && room.proctor2.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor2.phone})</span>` : ''}</span>
+                <span>👩‍🏫 <strong>អនុរក្សទី ២៖</strong> ${room.proctor2 ? room.proctor2.name : '<span class="text-slate-400 font-normal">(មិនទាន់ចាត់តាំង)</span>'} ${room.proctor2 && room.proctor2.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor2.phone})</span>` : ''}</span>
               </div>
             </div>
 
@@ -2718,9 +2820,10 @@
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
-      let pool = examAllocatedRooms;
-      if (activeExamGradeFilter !== 'ALL') {
-        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      const pool = getRoomsToShow();
+      if (!pool || pool.length === 0) {
+        alert('មិនមានបន្ទប់ប្រឡងសម្រាប់ទាញយកទេ!');
+        return;
       }
 
       let docBody = '';
@@ -2833,72 +2936,30 @@
           <![endif]-->
           <style>
             @page {
-              size: 21.0cm 29.7cm;
+              size: A4 portrait;
               margin: 1.5cm 1.5cm 1.5cm 1.5cm;
-              mso-page-orientation: portrait;
+              mso-header-margin: 1cm;
+              mso-footer-margin: 1cm;
             }
             body {
-              font-family: 'Kantumruy Pro', 'Khmer OS Siemreap', 'Segoe UI', Arial, sans-serif;
+              font-family: 'Kantumruy Pro', 'Khmer OS Battambang', 'Khmer OS Siemreap', 'Segoe UI', Arial, sans-serif;
+              font-size: 10pt;
+              line-height: 1.35;
+              color: #000;
             }
             table {
               border-collapse: collapse;
+              width: 100%;
             }
             th, td {
-              border: 1px solid #333333;
-              padding: 5px;
+              border: 1px solid #333;
+              padding: 4px 6px;
             }
           </style>
         </head>
         <body>
           ${docBody}
-        
-  <!-- Modal: បន្ថែមគ្រូបង្រៀន / គណៈកម្មការ -->
-  <div id="modalAddStaff" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-150">
-      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span>➕</span>
-          <h3 class="font-bold text-sm">បន្ថែមគ្រូ ឬសមាជិកគណៈកម្មការ</h3>
-        </div>
-        <button type="button" onclick="closeAddStaffModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
-      </div>
-      <div class="p-4 space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">គោត្តនាម និងនាម៖ <span class="text-red-500">*</span></label>
-          <input type="text" id="addStaffName" placeholder="ឧ. ចាន់ សុផល" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">ភេទ៖</label>
-            <select id="addStaffGender" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-              <option value="ប្រុស">ប្រុស</option>
-              <option value="ស្រី">ស្រី</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">លេខទូរស័ព្ទ៖</label>
-            <input type="text" id="addStaffPhone" placeholder="ឧ. 0973783762" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">មុខតំណែងដើមក្នុងសាលា៖</label>
-          <select id="addStaffRole" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="គ្រូបង្រៀន">គ្រូបង្រៀន (អនុរក្ស)</option>
-            <option value="នាយកសាលារៀន">នាយកសាលារៀន (ប្រធានមណ្ឌល)</option>
-            <option value="នាយករងសាលារៀន">នាយករងសាលារៀន (អនុប្រធានមណ្ឌល)</option>
-            <option value="បណ្ណារក្សសាលារៀន">បណ្ណារក្សសាលារៀន</option>
-            <option value="គ្រូជាប់កិច្ចសន្យា">គ្រូជាប់កិច្ចសន្យា</option>
-          </select>
-        </div>
-      </div>
-      <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-        <button type="button" onclick="closeAddStaffModal()" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition">បោះបង់</button>
-        <button type="button" onclick="saveNewStaffMember()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow">រក្សាទុក</button>
-      </div>
-    </div>
-  </div>
-
-</body>
+        </body>
         </html>
       `;
 
@@ -2906,7 +2967,13 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់_ទី១ដល់ទី៦' : activeExamGradeFilter;
+      let scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់' : activeExamGradeFilter;
+      if (activeExamRoomTab === 'RANGE') {
+        scopeLabel += `_បន្ទប់ទី${activeExamRoomRange.from}ដល់${activeExamRoomRange.to}`;
+      } else if (activeExamRoomTab !== 'ALL') {
+        const r = pool[0];
+        if (r) scopeLabel += `_${r.roomName}`;
+      }
       a.download = `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${scopeLabel}.doc`;
       document.body.appendChild(a);
       a.click();
@@ -2927,9 +2994,10 @@
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
-      let pool = examAllocatedRooms;
-      if (activeExamGradeFilter !== 'ALL') {
-        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      const pool = getRoomsToShow();
+      if (!pool || pool.length === 0) {
+        alert('មិនមានបន្ទប់ប្រឡងសម្រាប់ទាញយកទេ!');
+        return;
       }
 
       const wb = XLSX.utils.book_new();
@@ -2975,7 +3043,13 @@
         XLSX.utils.book_append_sheet(wb, ws, sheetTitle.slice(0, 31));
       });
 
-      const scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់_ទី១ដល់ទី៦' : activeExamGradeFilter;
+      let scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់' : activeExamGradeFilter;
+      if (activeExamRoomTab === 'RANGE') {
+        scopeLabel += `_បន្ទប់ទី${activeExamRoomRange.from}ដល់${activeExamRoomRange.to}`;
+      } else if (activeExamRoomTab !== 'ALL') {
+        const r = pool[0];
+        if (r) scopeLabel += `_${r.roomName}`;
+      }
       XLSX.writeFile(wb, `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${scopeLabel}.xlsx`);
       showToast('បានទាញយក Excel (.xlsx) តាមបន្ទប់ដាច់ដោយឡែកជោគជ័យ!');
     }
@@ -3185,13 +3259,14 @@
     }
 
     function loadStaffFromLiveSystem(showAlert = true) {
-      const schoolName = document.getElementById('examSchoolSelect').value;
+      const select = document.getElementById('examSchoolSelect');
+      const schoolName = select ? select.value : '';
       if (!schoolName) {
         if (showAlert) alert('សូមជ្រើសរើសសាលាបឋមសិក្សាជាមុនសិន!');
         return;
       }
 
-      const cleanSchool = s => (s || '').replace(/\([^)]*\)/g, '').replace(/[—\-].*$/, '').trim().toLowerCase();
+      const cleanSchool = s => (s || '').replace(/\([^)]*\)/g, '').replace(/[—-].*$/, '').trim().toLowerCase();
       const targetClean = cleanSchool(schoolName);
 
       const pool = (localData && localData.staff && localData.staff.length > 0)
@@ -3200,6 +3275,7 @@
             school: r[0], name: r[1], gender: r[2], dob: r[3], role: r[4], phone: r[5], type: r[6]
           })) : []);
 
+      // យកតែគ្រូនៅក្នុងសាលាដែលបានជ្រើសប៉ុណ្ណោះ (Strictly selected school ONLY)
       const matches = pool.filter(s => {
         const sClean = cleanSchool(s.school);
         return sClean.includes(targetClean) || targetClean.includes(sClean);
@@ -3210,14 +3286,20 @@
           name: s.name,
           gender: s.gender || 'ប្រុស',
           role: s.role || 'គ្រូបង្រៀន',
-          phone: s.phone || ''
+          phone: s.phone || '',
+          originSchool: s.school
         }));
+
         processStaffAllocation();
-        if (showAlert) showToast(`បានទាញយកបុគ្គលិកចំនួន ${examStaffList.length} នាក់ពី Google Sheets ជោគជ័យ!`);
-      } else {
         if (showAlert) {
-          alert(`មិនទាន់មានទិន្នន័យបុគ្គលិកក្នុង Google Sheets សម្រាប់ «${schoolName}» នៅឡើយទេ។ ប្រព័ន្ធនឹងបង្កើតបញ្ជីគ្រូគំរូតាមបទដ្ឋានរដ្ឋបាលជូន!`);
-          generateSampleStaff();
+          showToast(`បានទាញយកគ្រូនៅក្នុង «${schoolName}» ចំនួន ${examStaffList.length} នាក់ពី Google Sheets ជោគជ័យ!`);
+        }
+      } else {
+        // ករណីសាលាជ្រើសរើសមិនទាន់មានទិន្នន័យគ្រូក្នុង Google Sheets
+        examStaffList = [];
+        processStaffAllocation();
+        if (showAlert) {
+          alert(`សាលា «${schoolName}» មិនទាន់មានទិន្នន័យគ្រូក្នុង Google Sheets នៅឡើយទេ។\n\nលោកអ្នកអាចចុច «🎲 គ្រូគំរូរហ័ស» ដើម្បីបង្កើតសាកល្បង ឬចុច «➕ ថែមគ្រូ» ដើម្បីបញ្ចូលគ្រូដោយដៃ!`);
         }
       }
     }
