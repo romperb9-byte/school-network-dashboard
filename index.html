@@ -2028,6 +2028,23 @@
       return 'ថ្នាក់ទី ៦';
     }
 
+    function normalizeClassName(rawClass, gradeName) {
+      if (!rawClass) return `${gradeName}-ក`;
+      let c = String(rawClass).trim();
+      const m = c.match(/^([1-6])[\s\-_]*([ក-អa-zA-Z])/);
+      if (m) {
+        const num = m[1];
+        let sec = m[2];
+        if (sec.toLowerCase() === 'a') sec = 'ក';
+        if (sec.toLowerCase() === 'b') sec = 'ខ';
+        if (sec.toLowerCase() === 'c') sec = 'គ';
+        const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+        return `ថ្នាក់ទី ${khmerNums[parseInt(num, 10)]}-${sec}`;
+      }
+      if (!c.includes('ថ្នាក់')) return `${gradeName} (${c})`;
+      return c;
+    }
+
     function extractGradeLevel(gradeStr) {
       if (!gradeStr) return 'ថ្នាក់ទី ៦';
       const s = toArabicDigits(String(gradeStr).trim());
@@ -2115,14 +2132,9 @@
 
     function generateSampleCandidates() {
       const grades = getGradesToProcess();
-      const perGradeCountInput = document.getElementById('samplePerGradeCount');
-      const perGradeFemaleInput = document.getElementById('samplePerGradeFemale');
-      const singleTotalInput = document.getElementById('sampleTotalCount');
-      const singleFemaleInput = document.getElementById('sampleFemaleCount');
-
       examCandidateList = [];
 
-      const genStudentsForGrade = (gName, tot, fCount) => {
+      const genStudentsForClass = (gName, secName, tot, fCount) => {
         const students = [];
         const mCount = Math.max(0, tot - fCount);
         for (let i = 0; i < fCount; i++) {
@@ -2130,11 +2142,12 @@
           const giv = KHMER_FEMALES[(i * 2 + 3) % KHMER_FEMALES.length];
           students.push({
             canonicalGrade: gName,
+            classSection: secName,
             nameKh: `${sur.kh} ${giv.kh}`,
             nameEn: `${sur.en} ${giv.en}`,
             gender: 'ស្រី',
             dob: `1${(i%9)+1}/0${(i%9)+1}/2014`,
-            originClass: `${gName.replace('ថ្នាក់ទី ', '')}-ក`
+            originClass: secName
           });
         }
         for (let i = 0; i < mCount; i++) {
@@ -2142,27 +2155,35 @@
           const giv = KHMER_MALES[(i * 2 + 1) % KHMER_MALES.length];
           students.push({
             canonicalGrade: gName,
+            classSection: secName,
             nameKh: `${sur.kh} ${giv.kh}`,
             nameEn: `${sur.en} ${giv.en}`,
             gender: 'ប្រុស',
             dob: `0${(i%9)+1}/0${(i%9)+1}/2014`,
-            originClass: `${gName.replace('ថ្នាក់ទី ', '')}-ក`
+            originClass: secName
           });
         }
         return students;
       };
 
       if (grades.length > 1) {
-        const countPerGrade = parseInt(perGradeCountInput ? perGradeCountInput.value : 40, 10) || 40;
-        const femalePerGrade = parseInt(perGradeFemaleInput ? perGradeFemaleInput.value : 20, 10) || 20;
         grades.forEach(gName => {
-          examCandidateList.push(...genStudentsForGrade(gName, countPerGrade, femalePerGrade));
+          if (gName === 'ថ្នាក់ទី ២') {
+            // ថ្នាក់ទី ២ មាន ២ ថ្នាក់៖ ថ្នាក់ ២-ក និង ២-ខ
+            examCandidateList.push(...genStudentsForClass(gName, 'ថ្នាក់ទី ២-ក', 32, 16));
+            examCandidateList.push(...genStudentsForClass(gName, 'ថ្នាក់ទី ២-ខ', 32, 16));
+          } else {
+            examCandidateList.push(...genStudentsForClass(gName, `${gName}-ក`, 40, 20));
+          }
         });
       } else {
         const gName = grades[0] || 'ថ្នាក់ទី ៦';
-        const tot = parseInt(singleTotalInput ? singleTotalInput.value : 45, 10) || 45;
-        const fCount = parseInt(singleFemaleInput ? singleFemaleInput.value : 22, 10) || 22;
-        examCandidateList.push(...genStudentsForGrade(gName, tot, fCount));
+        if (gName === 'ថ្នាក់ទី ២') {
+          examCandidateList.push(...genStudentsForClass(gName, 'ថ្នាក់ទី ២-ក', 32, 16));
+          examCandidateList.push(...genStudentsForClass(gName, 'ថ្នាក់ទី ២-ខ', 32, 16));
+        } else {
+          examCandidateList.push(...genStudentsForClass(gName, `${gName}-ក`, 45, 22));
+        }
       }
 
       updateCandidateCountBadge();
@@ -2217,12 +2238,14 @@
         const nameKh = s.name || '';
         const nameEn = transliterateKhmerToLatin(nameKh);
         const canonG = extractGradeLevel(s.grade);
+        const normClass = normalizeClassName(s.grade, canonG);
         return {
           nameKh: nameKh,
           nameEn: nameEn,
           gender: s.gender || 'ប្រុស',
           dob: s.dob || '01/01/2014',
           originClass: s.grade || canonG,
+          classSection: normClass,
           canonicalGrade: canonG
         };
       });
@@ -2383,7 +2406,7 @@
       let globalRoomCounter = 0;
       let overallCandidateIndex = 0;
 
-      // បង្កើតបន្ទប់ប្រឡងតាមលំដាប់ថ្នាក់៖ ទី១ ចែកជា២បន្ទប់ (បន្ទប់ ០១, ០២) -> ទី២ ចែកជា២បន្ទប់ (បន្ទប់ ០៣, ០៤) -> ទី៣...
+      // បង្កើតបន្ទប់ប្រឡងតាមលំដាប់ថ្នាក់ និងតាមថ្នាក់នីមួយៗ (ករណីថ្នាក់ទី២ មាន ២ថ្នាក់ (២-ក, ២-ខ) ត្រូវបែងចែកថ្នាក់ទាំងនោះជា២ដូចគ្នា)
       gradesToProcess.forEach((gradeName) => {
         const gradeCandidates = examCandidateList.filter(s => {
           if (gradesToProcess.length > 1) {
@@ -2394,66 +2417,81 @@
 
         if (gradeCandidates.length === 0) return;
 
-        // តម្រៀបបេក្ខជនតាមលំដាប់អក្ខរក្រមខ្មែរ (ក-អ) តាមបទដ្ឋានផ្លូវការ
-        gradeCandidates.sort((a, b) => (a.nameKh || '').localeCompare(b.nameKh || '', 'km'));
+        // Group by classSection (ឧ. ថ្នាក់ទី ២-ក, ថ្នាក់ទី ២-ខ)
+        const sectionMap = new Map();
+        gradeCandidates.forEach(s => {
+          const sec = s.classSection || normalizeClassName(s.originClass, gradeName);
+          if (!sectionMap.has(sec)) sectionMap.set(sec, []);
+          sectionMap.get(sec).push(s);
+        });
 
-        let roomSizes = [];
-        const tot = gradeCandidates.length;
+        // តម្រៀបតាមលំដាប់ថ្នាក់៖ ក, ខ, គ...
+        const sortedSections = Array.from(sectionMap.keys()).sort((a, b) => a.localeCompare(b, 'km'));
 
-        if (mode === 'splitTwo') {
-          const half = Math.ceil(tot / 2);
-          roomSizes = [half, tot - half];
-        } else if (mode === 'customRooms') {
-          const numR = customRoomsCount;
-          const base = Math.floor(tot / numR);
-          const remainder = tot % numR;
-          for (let i = 0; i < numR; i++) {
-            roomSizes.push(base + (i < remainder ? 1 : 0));
+        sortedSections.forEach((secName) => {
+          const secCandidates = sectionMap.get(secName);
+          // តម្រៀបបេក្ខជនក្នុងថ្នាក់តាមលំដាប់អក្ខរក្រមខ្មែរ (ក-អ) តាមបទដ្ឋានផ្លូវការ
+          secCandidates.sort((a, b) => (a.nameKh || '').localeCompare(b.nameKh || '', 'km'));
+
+          let roomSizes = [];
+          const tot = secCandidates.length;
+
+          if (mode === 'splitTwo') {
+            const half = Math.ceil(tot / 2);
+            roomSizes = [half, tot - half];
+          } else if (mode === 'customRooms') {
+            const numR = customRoomsCount;
+            const base = Math.floor(tot / numR);
+            const remainder = tot % numR;
+            for (let i = 0; i < numR; i++) {
+              roomSizes.push(base + (i < remainder ? 1 : 0));
+            }
+          } else {
+            // perRoom
+            let rem = tot;
+            while (rem > 0) {
+              const take = Math.min(perRoom, rem);
+              roomSizes.push(take);
+              rem -= take;
+            }
           }
-        } else {
-          // perRoom
-          let rem = tot;
-          while (rem > 0) {
-            const take = Math.min(perRoom, rem);
-            roomSizes.push(take);
-            rem -= take;
-          }
-        }
 
-        let curGradeIdx = 0;
-        roomSizes.forEach((size, rIdx) => {
-          globalRoomCounter++; // Sequential room number across the exam center!
-          const slice = gradeCandidates.slice(curGradeIdx, curGradeIdx + size);
-          curGradeIdx += size;
+          let curSecIdx = 0;
+          roomSizes.forEach((size, rIdx) => {
+            globalRoomCounter++; // Sequential room number across the exam center!
+            const slice = secCandidates.slice(curSecIdx, curSecIdx + size);
+            curSecIdx += size;
 
-          const roomNoKh = toKhNum(globalRoomCounter);
-          const roomInGradeKh = toKhNum(rIdx + 1);
+            const roomNoKh = toKhNum(globalRoomCounter);
+            const roomInSecKh = toKhNum(rIdx + 1);
 
-          const students = slice.map((st, idx) => {
-            overallCandidateIndex++;
-            const seatNo = toKhNum(idx + 1);
-            const candId = `TLC-${String(overallCandidateIndex).padStart(3, '0')}`;
-            return {
-              ...st,
-              seatNo: seatNo,
-              candidateId: candId
-            };
-          });
+            const students = slice.map((st, idx) => {
+              overallCandidateIndex++;
+              const seatNo = toKhNum(idx + 1);
+              const candId = `TLC-${String(overallCandidateIndex).padStart(3, '0')}`;
+              return {
+                ...st,
+                seatNo: seatNo,
+                candidateId: candId
+              };
+            });
 
-          const femaleCount = students.filter(s => s.gender === 'ស្រី').length;
+            const femaleCount = students.filter(s => s.gender === 'ស្រី').length;
 
-          examAllocatedRooms.push({
-            globalRoomNumber: globalRoomCounter,
-            grade: gradeName,
-            roomNumberInGrade: rIdx + 1,
-            roomName: `បន្ទប់លេខ ${roomNoKh}`,
-            fullTitle: `${gradeName} - បន្ទប់លេខ ${roomNoKh}`,
-            gradeRoomTitle: `(${gradeName} បន្ទប់ទី ${roomInGradeKh})`,
-            students: students,
-            femaleCount: femaleCount,
-            totalCount: students.length,
-            proctor1: null,
-            proctor2: null
+            examAllocatedRooms.push({
+              globalRoomNumber: globalRoomCounter,
+              grade: gradeName,
+              classSection: secName,
+              roomNumberInGrade: rIdx + 1,
+              roomName: `បន្ទប់លេខ ${roomNoKh}`,
+              fullTitle: `${secName} - បន្ទប់លេខ ${roomNoKh}`,
+              gradeRoomTitle: `(${secName} បន្ទប់ទី ${roomInSecKh})`,
+              students: students,
+              femaleCount: femaleCount,
+              totalCount: students.length,
+              proctor1: null,
+              proctor2: null
+            });
           });
         });
       });
