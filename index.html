@@ -2055,6 +2055,40 @@
 
       const school = document.getElementById('examSchoolSelect') ? document.getElementById('examSchoolSelect').value : '';
       updateExamLiveClassDropdown(school);
+
+      // ធ្វើបច្ចុប្បន្នភាពទិន្នន័យសិស្ស និងបន្ទប់ប្រឡងស្វ័យប្រវត្តិភ្លាមៗពេលប្តូរកម្រិតថ្នាក់ (Reactivity)
+      autoRefreshCandidatesAndRooms();
+    }
+
+    function autoRefreshCandidatesAndRooms() {
+      // ពិនិត្យមើលថាតើមានទិន្នន័យផ្ទាល់ពី Google Sheets សម្រាប់សាលាដែលបានជ្រើសឬទេ
+      const schoolName = document.getElementById('examSchoolSelect') ? document.getElementById('examSchoolSelect').value : '';
+      const pool = (localData && localData.students && localData.students.length > 0)
+        ? localData.students
+        : ((window.DATA_CACHE && window.DATA_CACHE.students) ? window.DATA_CACHE.students.map(r => ({
+            school: r[0], name: r[1], gender: r[2], dob: r[3], grade: r[4]
+          })) : []);
+
+      const cleanSchool = s => (s || '').replace(/\([^)]*\)/g, '').replace(/[—-].*$/, '').trim().toLowerCase();
+      const targetClean = cleanSchool(schoolName);
+      const schoolStudents = pool.filter(s => {
+        const sClean = cleanSchool(s.school);
+        return sClean.includes(targetClean) || targetClean.includes(sClean);
+      });
+
+      const grades = getGradesToProcess();
+      const matchingLiveStudents = schoolStudents.filter(s => grades.includes(extractGradeLevel(s.grade)));
+
+      if (matchingLiveStudents.length > 0) {
+        // មានសិស្សផ្ទាល់ពី Google Sheets -> ទាញមកប្រើប្រាស់ស្វ័យប្រវត្តិ
+        loadCandidatesFromLiveSystem();
+      } else {
+        // បើគ្មានក្នុង Google Sheets -> បង្កើតសិស្សគំរូស្វ័យប្រវត្តិតាមកម្រិតថ្នាក់ដែលបានជ្រើស (១-៣, ៤-៦, ឬ ១-៦)
+        generateSampleCandidates();
+      }
+
+      // បែងចែកបន្ទប់ឡើងវិញភ្លាមៗ
+      processRoomAllocation();
     }
 
     function getSelectedGradeText() {
@@ -2098,15 +2132,16 @@
     }
 
     function extractGradeLevel(gradeStr) {
-      if (!gradeStr) return 'ថ្នាក់ទី ៦';
+      if (!gradeStr) return null;
       const s = toArabicDigits(String(gradeStr).trim());
+      if (/មត្តេយ្យ|មតេយ្យ/i.test(s)) return 'មត្តេយ្យ';
       if (/^1|ថ្នាក់ទី\s*1|ទី\s*1/i.test(s)) return 'ថ្នាក់ទី ១';
       if (/^2|ថ្នាក់ទី\s*2|ទី\s*2/i.test(s)) return 'ថ្នាក់ទី ២';
       if (/^3|ថ្នាក់ទី\s*3|ទី\s*3/i.test(s)) return 'ថ្នាក់ទី ៣';
       if (/^4|ថ្នាក់ទី\s*4|ទី\s*4/i.test(s)) return 'ថ្នាក់ទី ៤';
       if (/^5|ថ្នាក់ទី\s*5|ទី\s*5/i.test(s)) return 'ថ្នាក់ទី ៥';
       if (/^6|ថ្នាក់ទី\s*6|ទី\s*6/i.test(s)) return 'ថ្នាក់ទី ៦';
-      return 'ថ្នាក់ទី ៦';
+      return null;
     }
 
     function updateExamLiveClassDropdown(schoolName) {
