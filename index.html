@@ -613,6 +613,47 @@
                 </div>
               </div>
 
+              
+              <!-- Step 4: គណៈកម្មការ និងគ្រូអនុរក្សមណ្ឌលប្រឡង (Exam Center Committee & Proctors) -->
+              <div class="space-y-3 pt-3 border-t border-slate-200">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <span>👥</span> <span>៤. គណៈកម្មការ និងគ្រូអនុរក្សមណ្ឌល</span>
+                  </h4>
+                  <span id="examStaffCountBadge" class="px-2.5 py-0.5 bg-indigo-100 text-indigo-800 rounded-full text-[11px] font-bold">
+                    គ្រូ ០ នាក់
+                  </span>
+                </div>
+
+                <div class="p-2.5 bg-indigo-50/60 rounded-xl border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                  <strong class="font-bold">បទដ្ឋានចាត់តាំងផ្លូវការ៖</strong> នាយកសាលាជា <strong class="text-indigo-800 font-bold">ប្រធានមណ្ឌល</strong>, នាយករងជា <strong class="text-indigo-800 font-bold">អនុប្រធានមណ្ឌល</strong>, និងគ្រូបង្រៀនទាំងអស់ត្រូវបានបែងចែកជា <strong class="text-indigo-800 font-bold">អនុរក្សតាមបន្ទប់</strong> (អនុរក្សទី១ & ទី២) ឬអនុរក្សបម្រុង។
+                </div>
+
+                <!-- Staff Action Buttons -->
+                <div class="grid grid-cols-3 gap-1.5 text-xs">
+                  <button type="button" onclick="loadStaffFromLiveSystem()" class="py-2 px-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-sm text-center">
+                    <span>🔄</span> <span>ទាញពីប្រព័ន្ធ</span>
+                  </button>
+                  <button type="button" onclick="generateSampleStaff()" class="py-2 px-2 bg-amber-500 hover:bg-amber-400 text-white rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-sm text-center">
+                    <span>🎲</span> <span>គ្រូគំរូរហ័ស</span>
+                  </button>
+                  <button type="button" onclick="openAddStaffModal()" class="py-2 px-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-sm text-center">
+                    <span>➕</span> <span>ថែមគ្រូ</span>
+                  </button>
+                </div>
+
+                <!-- Staff List Preview -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 px-1 font-semibold">
+                    <span>បញ្ជីឈ្មោះគ្រូក្នុងមណ្ឌល</span>
+                    <button type="button" onclick="clearExamStaffList()" class="text-red-500 hover:underline">សម្អាត</button>
+                  </div>
+                  <div id="examStaffListPreview" class="max-h-36 overflow-y-auto space-y-1 p-2 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                    <p class="text-center text-slate-400 py-3 text-[11px]">មិនទាន់មានទិន្នន័យគ្រូនៅឡើយទេ សូមចុច «ទាញពីប្រព័ន្ធ» ឬ «គ្រូគំរូរហ័ស»</p>
+                  </div>
+                </div>
+              </div>
+
               <!-- Action Button -->
               <div class="pt-2 border-t border-slate-100">
                 <button onclick="processRoomAllocation()" class="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">
@@ -651,6 +692,36 @@
               </div>
             </div>
 
+            
+            <!-- View Mode Switcher: Students vs Committee/Proctors -->
+            <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <div class="flex items-center gap-1.5">
+                <button type="button" id="btnViewStudents" onclick="setExamViewMode('STUDENTS')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white">
+                  <span>📋</span>
+                  <span>បញ្ជីសិស្សតាមបន្ទប់</span>
+                  <span id="badgeRoomCount" class="px-1.5 py-0.2 bg-white/20 rounded-full text-[10px]">0 បន្ទប់</span>
+                </button>
+                <button type="button" id="btnViewProctors" onclick="setExamViewMode('STAFF')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">
+                  <span>👥</span>
+                  <span>តារាងបែងចែកគ្រូ / អនុរក្ស</span>
+                  <span id="badgeStaffCount" class="px-1.5 py-0.2 bg-slate-100 text-slate-800 rounded-full text-[10px] font-bold">0 នាក់</span>
+                </button>
+              </div>
+
+              <!-- Context-Aware Export Buttons for Proctor View -->
+              <div id="proctorExportButtons" class="hidden items-center gap-1.5">
+                <button type="button" onclick="exportProctorTableWord()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  📄 <span>Word តារាងគ្រូ</span>
+                </button>
+                <button type="button" onclick="exportProctorTableExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  📊 <span>Excel តារាងគ្រូ</span>
+                </button>
+                <button type="button" onclick="printProctorTable()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  🖨️ <span>បោះពុម្ព / PDF</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Grade Breakdown Cards (Grid for Grade 1 through Grade 6) -->
             <div id="examGradeBreakdownCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               <!-- Rendered via JS -->
@@ -677,6 +748,11 @@
               <div class="text-center py-12 text-slate-400 text-sm">
                 មិនទាន់មានលទ្ធផលនៅឡើយទេ សូមជ្រើសរើសប្រភពសិស្ស រួចចុច «ចុចចែកបន្ទប់ប្រឡងភ្លាមៗ»
               </div>
+            </div>
+
+            <!-- Proctor & Committee Official Table View (តារាងបែងចែកគ្រូ/អនុរក្សផ្លូវការ) -->
+            <div id="examProctorPrintArea" class="hidden space-y-6 bg-slate-50/50 p-2 sm:p-4 rounded-xl border border-slate-100">
+              <!-- Rendered via JS -->
             </div>
 
           </div>
@@ -1773,6 +1849,9 @@
 
     let examCandidateList = [];
     let examAllocatedRooms = [];
+    let examStaffList = [];
+    let examAllocatedStaff = [];
+    let activeExamView = 'STUDENTS'; // 'STUDENTS' | 'STAFF'
     let activeExamGradeFilter = 'ALL';
     let activeExamRoomTab = 'ALL';
 
@@ -1809,6 +1888,7 @@
       updateAllocModeUI();
       onExamGradeScopeChange();
       generateSampleCandidates();
+      generateSampleStaff();
     }
 
     function populateExamSchoolsDropdown() {
@@ -1839,6 +1919,7 @@
       }
 
       updateExamLiveClassDropdown(schoolName);
+      loadStaffFromLiveSystem(false);
     }
 
     function onExamGradeScopeChange() {
@@ -2379,6 +2460,15 @@
       renderGradeBreakdownCards();
       renderGradeFilterTabs();
       renderRoomFilterTabs();
+      
+      const badgeRoom = document.getElementById('badgeRoomCount');
+      if (badgeRoom) badgeRoom.textContent = `${examAllocatedRooms.length} បន្ទប់`;
+
+      if (!examStaffList || examStaffList.length === 0) {
+        generateSampleStaff();
+      } else {
+        processStaffAllocation();
+      }
       renderExamRoomsHTML();
 
       const summaryText = document.getElementById('examRoomSummaryText');
@@ -2562,6 +2652,17 @@
               </p>
             </div>
 
+            <!-- Room Proctors Box -->
+            <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold text-[11px]">គណៈកម្មការអនុរក្ស</span>
+                <span class="inline-flex items-center gap-1">👨‍🏫 <strong>អនុរក្សទី ១៖</strong> ${room.proctor1 ? room.proctor1.name : '<span class="text-slate-400 font-normal">មិនទាន់ចាត់តាំង</span>'} ${room.proctor1 && room.proctor1.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor1.phone})</span>` : ''}</span>
+              </div>
+              <div class="inline-flex items-center gap-1">
+                <span>👩‍🏫 <strong>អនុរក្សទី ២៖</strong> ${room.proctor2 ? room.proctor2.name : '<span class="text-slate-400 font-normal">មិនទាន់ចាត់តាំង</span>'} ${room.proctor2 && room.proctor2.phone ? `<span class="text-slate-500 font-mono text-[11px]">(${room.proctor2.phone})</span>` : ''}</span>
+              </div>
+            </div>
+
             <div class="overflow-x-auto">
               <table class="w-full exam-table border-collapse text-xs">
                 <thead>
@@ -2670,6 +2771,11 @@
               <p style="font-size:10pt; margin:3px 0;">
                 បេក្ខជនសរុប៖ <strong>${room.students.length}</strong> នាក់ (ស្រី <strong>${room.femaleCount}</strong> នាក់)
               </p>
+              <p style="font-size:10pt; margin:4px 0; color:#374151;">
+                អនុរក្សទី ១៖ <strong>${room.proctor1 ? room.proctor1.name : '................................'}</strong> 
+                &nbsp;&nbsp;|&nbsp;&nbsp; 
+                អនុរក្សទី ២៖ <strong>${room.proctor2 ? room.proctor2.name : '................................'}</strong>
+              </p>
             </div>
 
             <table style="width:100%; border-collapse:collapse; font-size:10pt;" border="1">
@@ -2745,7 +2851,54 @@
         </head>
         <body>
           ${docBody}
-        </body>
+        
+  <!-- Modal: បន្ថែមគ្រូបង្រៀន / គណៈកម្មការ -->
+  <div id="modalAddStaff" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>➕</span>
+          <h3 class="font-bold text-sm">បន្ថែមគ្រូ ឬសមាជិកគណៈកម្មការ</h3>
+        </div>
+        <button type="button" onclick="closeAddStaffModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <div class="p-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">គោត្តនាម និងនាម៖ <span class="text-red-500">*</span></label>
+          <input type="text" id="addStaffName" placeholder="ឧ. ចាន់ សុផល" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">ភេទ៖</label>
+            <select id="addStaffGender" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="ប្រុស">ប្រុស</option>
+              <option value="ស្រី">ស្រី</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">លេខទូរស័ព្ទ៖</label>
+            <input type="text" id="addStaffPhone" placeholder="ឧ. 0973783762" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">មុខតំណែងដើមក្នុងសាលា៖</label>
+          <select id="addStaffRole" class="w-full p-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="គ្រូបង្រៀន">គ្រូបង្រៀន (អនុរក្ស)</option>
+            <option value="នាយកសាលារៀន">នាយកសាលារៀន (ប្រធានមណ្ឌល)</option>
+            <option value="នាយករងសាលារៀន">នាយករងសាលារៀន (អនុប្រធានមណ្ឌល)</option>
+            <option value="បណ្ណារក្សសាលារៀន">បណ្ណារក្សសាលារៀន</option>
+            <option value="គ្រូជាប់កិច្ចសន្យា">គ្រូជាប់កិច្ចសន្យា</option>
+          </select>
+        </div>
+      </div>
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button type="button" onclick="closeAddStaffModal()" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition">បោះបង់</button>
+        <button type="button" onclick="saveNewStaffMember()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow">រក្សាទុក</button>
+      </div>
+    </div>
+  </div>
+
+</body>
         </html>
       `;
 
@@ -2791,6 +2944,7 @@
           ['បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង'],
           [`សម័យប្រឡង៖ ${examSession}    កម្រិតថ្នាក់៖ ${room.grade}    ${room.roomName}`],
           [`បេក្ខជនសរុប៖ ${room.students.length} នាក់ (ស្រី ${room.femaleCount} នាក់)`],
+          [`អនុរក្សទី ១៖ ${room.proctor1 ? room.proctor1.name : ''}    អនុរក្សទី ២៖ ${room.proctor2 ? room.proctor2.name : ''}`],
           [''],
           ['លេខតុ', 'អត្តលេខ', 'គោត្តនាម-នាម', 'អក្សរឡាតាំង', 'ភេទ', 'ថ្ងៃខែឆ្នាំកំណើត', 'ថ្នាក់ដើម', 'ហត្ថលេខាបេក្ខជន']
         ];
@@ -2833,6 +2987,731 @@
       }
       window.print();
     }
+
+
+    // ==========================================
+    // មុខងារចាត់តាំង និងបែងចែកគ្រូ/អនុរក្សមណ្ឌលប្រឡង (EXAM PROCTOR ALLOCATION)
+    // ==========================================
+
+    function setExamViewMode(mode) {
+      activeExamView = mode;
+      const btnStudents = document.getElementById('btnViewStudents');
+      const btnProctors = document.getElementById('btnViewProctors');
+      const proctorBtns = document.getElementById('proctorExportButtons');
+      const gradeBreakdown = document.getElementById('examGradeBreakdownCards');
+      const gradeFilter = document.getElementById('examGradeFilterContainer');
+      const roomFilter = document.getElementById('examRoomFilterContainer');
+      const studentArea = document.getElementById('examPrintArea');
+      const proctorArea = document.getElementById('examProctorPrintArea');
+
+      if (mode === 'STAFF') {
+        if (btnStudents) {
+          btnStudents.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-white text-slate-700 hover:bg-slate-100 border border-slate-200';
+        }
+        if (btnProctors) {
+          btnProctors.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white';
+        }
+        if (proctorBtns) proctorBtns.classList.remove('hidden');
+        if (gradeBreakdown) gradeBreakdown.classList.add('hidden');
+        if (gradeFilter) gradeFilter.classList.add('hidden');
+        if (roomFilter) roomFilter.classList.add('hidden');
+        if (studentArea) studentArea.classList.add('hidden');
+        if (proctorArea) {
+          proctorArea.classList.remove('hidden');
+          renderProctorTableHTML();
+        }
+      } else {
+        if (btnStudents) {
+          btnStudents.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white';
+        }
+        if (btnProctors) {
+          btnProctors.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-white text-slate-700 hover:bg-slate-100 border border-slate-200';
+        }
+        if (proctorBtns) proctorBtns.classList.add('hidden');
+        if (gradeBreakdown) gradeBreakdown.classList.remove('hidden');
+        if (gradeFilter) gradeFilter.classList.remove('hidden');
+        if (roomFilter) roomFilter.classList.remove('hidden');
+        if (studentArea) studentArea.classList.remove('hidden');
+        if (proctorArea) proctorArea.classList.add('hidden');
+      }
+    }
+
+    function updateExamStaffCountBadge() {
+      const b1 = document.getElementById('examStaffCountBadge');
+      const b2 = document.getElementById('badgeStaffCount');
+      const count = examStaffList.length;
+      if (b1) b1.textContent = `គ្រូ ${count} នាក់`;
+      if (b2) b2.textContent = `${count} នាក់`;
+    }
+
+    function renderStaffListPreview() {
+      const container = document.getElementById('examStaffListPreview');
+      if (!container) return;
+      if (!examStaffList || examStaffList.length === 0) {
+        container.innerHTML = '<p class="text-center text-slate-400 py-3 text-[11px]">មិនទាន់មានទិន្នន័យគ្រូនៅឡើយទេ សូមចុច «ទាញពីប្រព័ន្ធ» ឬ «គ្រូគំរូរហ័ស»</p>';
+        return;
+      }
+
+      let html = '';
+      examStaffList.forEach((s, idx) => {
+        let roleBadge = 'bg-slate-100 text-slate-700';
+        const role = (s.role || '').toLowerCase();
+        if (role.includes('នាយក') && !role.includes('រង')) roleBadge = 'bg-purple-100 text-purple-800 font-bold';
+        else if (role.includes('រង')) roleBadge = 'bg-blue-100 text-blue-800 font-bold';
+        else roleBadge = 'bg-amber-100 text-amber-800';
+
+        html += `
+          <div class="flex items-center justify-between p-1.5 bg-white rounded-lg border border-slate-200/80 text-[11px]">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="font-bold text-slate-700 w-5 text-center">${idx + 1}.</span>
+              <span class="font-bold text-slate-900 truncate">${s.name}</span>
+              <span class="text-slate-500 text-[10px]">(${s.gender})</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] ${roleBadge}">${s.role || 'គ្រូបង្រៀន'}</span>
+            </div>
+            <button type="button" onclick="removeStaffMember(${idx})" class="text-red-400 hover:text-red-600 p-0.5 ml-1" title="លុប">&times;</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function removeStaffMember(idx) {
+      if (idx >= 0 && idx < examStaffList.length) {
+        examStaffList.splice(idx, 1);
+        processStaffAllocation();
+      }
+    }
+
+    function clearExamStaffList() {
+      examStaffList = [];
+      processStaffAllocation();
+      showToast('បានសម្អាតបញ្ជីគ្រូរួចរាល់');
+    }
+
+    function openAddStaffModal() {
+      const modal = document.getElementById('modalAddStaff');
+      if (modal) {
+        document.getElementById('addStaffName').value = '';
+        document.getElementById('addStaffPhone').value = '';
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function closeAddStaffModal() {
+      const modal = document.getElementById('modalAddStaff');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveNewStaffMember() {
+      const name = (document.getElementById('addStaffName').value || '').trim();
+      if (!name) {
+        alert('សូមបញ្ចូលឈ្មោះគ្រូបង្រៀន!');
+        return;
+      }
+      const gender = document.getElementById('addStaffGender').value || 'ប្រុស';
+      const phone = (document.getElementById('addStaffPhone').value || '').trim();
+      const role = document.getElementById('addStaffRole').value || 'គ្រូបង្រៀន';
+
+      examStaffList.push({
+        name: name,
+        gender: gender,
+        role: role,
+        phone: phone
+      });
+
+      closeAddStaffModal();
+      processStaffAllocation();
+      showToast(`បានបន្ថែមគ្រូ ${name} ជោគជ័យ!`);
+    }
+
+    function generateSampleStaff() {
+      const roomCount = (examAllocatedRooms && examAllocatedRooms.length > 0) ? examAllocatedRooms.length : 6;
+      const targetTeacherCount = Math.max(14, (roomCount * 2) + 2);
+
+      const sampleSurnames = ['ដួង', 'នេន', 'វ៉ែន', 'សុង', 'កែវ', 'សេង', 'មាស', 'ពេជ្រ', 'ឡុង', 'គង់', 'អ៊ុក', 'ឃឹម', 'ទេព', 'យី', 'ជួន', 'ឈុន', 'ម៉ៅ'];
+      const sampleMaleGiven = ['វន', 'សារុំ', 'សារុន', 'វិបុល', 'ពិសិដ្ឋ', 'រដ្ឋា', 'រតនា', 'ភារុណ', 'សីហា', 'កុសល', 'បញ្ញា', 'សម្បត្តិ'];
+      const sampleFemaleGiven = ['សុនី', 'សៀវ', 'ពិសី', 'សុភា', 'ធីតា', 'ចរិយា', 'ស្រីមុំ', 'គន្ធា', 'ម៉ាលី', 'កល្យាណ', 'លក្ខិណា', 'ទេវី'];
+
+      const prefixes = ['097', '088', '071', '012', '015', '096'];
+      const genPhone = (i) => {
+        const p = prefixes[i % prefixes.length];
+        const num = String(100000 + ((i * 47321 + 83921) % 900000));
+        return `${p}${num}`;
+      };
+
+      examStaffList = [];
+
+      // 1. Principal (នាយកសាលា) -> ប្រធានមណ្ឌល
+      examStaffList.push({
+        name: 'ចាន់ សុផល',
+        gender: 'ប្រុស',
+        role: 'នាយកសាលារៀន',
+        phone: '0973783762'
+      });
+
+      // 2. Vice Principal (នាយករងសាលា) -> អនុប្រធានមណ្ឌល
+      examStaffList.push({
+        name: 'ម៉ម សុវណ្ណា',
+        gender: 'ប្រុស',
+        role: 'នាយករងសាលារៀន',
+        phone: '0973790797'
+      });
+
+      // 3. Teachers pool (គ្រូបង្រៀនទាំងអស់)
+      const usedNames = new Set(['ចាន់ សុផល', 'ម៉ម សុវណ្ណា']);
+      let attempt = 0;
+      while (examStaffList.length < targetTeacherCount + 2 && attempt < 100) {
+        attempt++;
+        const isF = examStaffList.length % 2 === 0;
+        const sName = sampleSurnames[(attempt * 3) % sampleSurnames.length];
+        const gName = isF 
+          ? sampleFemaleGiven[(attempt * 2) % sampleFemaleGiven.length]
+          : sampleMaleGiven[(attempt * 2) % sampleMaleGiven.length];
+        const fullName = `${sName} ${gName}`;
+        if (usedNames.has(fullName)) continue;
+        usedNames.add(fullName);
+
+        const isLast = examStaffList.length === targetTeacherCount + 1;
+        examStaffList.push({
+          name: fullName,
+          gender: isF ? 'ស្រី' : 'ប្រុស',
+          role: isLast ? 'បណ្ណារក្សសាលារៀន' : 'គ្រូបង្រៀន',
+          phone: genPhone(examStaffList.length)
+        });
+      }
+
+      processStaffAllocation();
+      showToast(`បានបង្កើតគ្រូគំរូផ្លូវការចំនួន ${examStaffList.length} នាក់ជោគជ័យ!`);
+    }
+
+    function loadStaffFromLiveSystem(showAlert = true) {
+      const schoolName = document.getElementById('examSchoolSelect').value;
+      if (!schoolName) {
+        if (showAlert) alert('សូមជ្រើសរើសសាលាបឋមសិក្សាជាមុនសិន!');
+        return;
+      }
+
+      const cleanSchool = s => (s || '').replace(/\([^)]*\)/g, '').replace(/[—\-].*$/, '').trim().toLowerCase();
+      const targetClean = cleanSchool(schoolName);
+
+      const pool = (localData && localData.staff && localData.staff.length > 0)
+        ? localData.staff
+        : ((window.DATA_CACHE && window.DATA_CACHE.staff) ? window.DATA_CACHE.staff.map(r => ({
+            school: r[0], name: r[1], gender: r[2], dob: r[3], role: r[4], phone: r[5], type: r[6]
+          })) : []);
+
+      const matches = pool.filter(s => {
+        const sClean = cleanSchool(s.school);
+        return sClean.includes(targetClean) || targetClean.includes(sClean);
+      });
+
+      if (matches.length > 0) {
+        examStaffList = matches.map(s => ({
+          name: s.name,
+          gender: s.gender || 'ប្រុស',
+          role: s.role || 'គ្រូបង្រៀន',
+          phone: s.phone || ''
+        }));
+        processStaffAllocation();
+        if (showAlert) showToast(`បានទាញយកបុគ្គលិកចំនួន ${examStaffList.length} នាក់ពី Google Sheets ជោគជ័យ!`);
+      } else {
+        if (showAlert) {
+          alert(`មិនទាន់មានទិន្នន័យបុគ្គលិកក្នុង Google Sheets សម្រាប់ «${schoolName}» នៅឡើយទេ។ ប្រព័ន្ធនឹងបង្កើតបញ្ជីគ្រូគំរូតាមបទដ្ឋានរដ្ឋបាលជូន!`);
+          generateSampleStaff();
+        }
+      }
+    }
+
+    function processStaffAllocation() {
+      updateExamStaffCountBadge();
+      renderStaffListPreview();
+
+      const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+      const toKhNum = n => String(n).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
+
+      let principal = null;
+      let vicePrincipal = null;
+      let teachersPool = [];
+
+      // 1. Identify leadership
+      examStaffList.forEach(s => {
+        const role = (s.role || '').toLowerCase();
+        if (!principal && (role.includes('នាយក') || role.includes('នាយិកា')) && !role.includes('រង')) {
+          principal = s;
+        } else if (!vicePrincipal && (role.includes('នាយករង') || role.includes('នាយិការង') || role.includes('រង'))) {
+          vicePrincipal = s;
+        } else {
+          teachersPool.push(s);
+        }
+      });
+
+      // Fallback if no explicit leadership found in staff list
+      if (!principal && teachersPool.length > 0) {
+        principal = teachersPool.shift();
+      }
+      if (!vicePrincipal && teachersPool.length > 0) {
+        vicePrincipal = teachersPool.shift();
+      }
+
+      examAllocatedStaff = [];
+      let staffCounter = 1;
+
+      // Add Principal
+      if (principal) {
+        examAllocatedStaff.push({
+          no: toKhNum(staffCounter++),
+          name: principal.name,
+          gender: principal.gender,
+          originalRole: principal.role || 'នាយកសាលារៀន',
+          examDuty: 'ប្រធានមណ្ឌល',
+          dutyBadgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+          assignedRoom: 'មណ្ឌលទាំងមូល',
+          phone: principal.phone || '',
+          note: 'ដឹកនាំ និងគ្រប់គ្រងទូទៅ'
+        });
+      }
+
+      // Add Vice Principal
+      if (vicePrincipal) {
+        examAllocatedStaff.push({
+          no: toKhNum(staffCounter++),
+          name: vicePrincipal.name,
+          gender: vicePrincipal.gender,
+          originalRole: vicePrincipal.role || 'នាយករងសាលារៀន',
+          examDuty: 'អនុប្រធានមណ្ឌល',
+          dutyBadgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+          assignedRoom: 'មណ្ឌលទាំងមូល',
+          phone: vicePrincipal.phone || '',
+          note: 'ជួយសម្របសម្រួល និងត្រួតពិនិត្យ'
+        });
+      }
+
+      // Assign teachers as proctors to rooms
+      const rooms = examAllocatedRooms || [];
+      let teacherIdx = 0;
+
+      // Pass 1: Proctor 1
+      rooms.forEach(r => {
+        if (teacherIdx < teachersPool.length) {
+          const t = teachersPool[teacherIdx++];
+          r.proctor1 = t;
+          examAllocatedStaff.push({
+            no: toKhNum(staffCounter++),
+            name: t.name,
+            gender: t.gender,
+            originalRole: t.role || 'គ្រូបង្រៀន',
+            examDuty: 'អនុរក្សទី ១',
+            dutyBadgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+            assignedRoom: `${r.grade} - ${r.roomName}`,
+            phone: t.phone || '',
+            note: 'អនុរក្សប្រចាំបន្ទប់'
+          });
+        } else {
+          r.proctor1 = null;
+        }
+      });
+
+      // Pass 2: Proctor 2
+      rooms.forEach(r => {
+        if (teacherIdx < teachersPool.length) {
+          const t = teachersPool[teacherIdx++];
+          r.proctor2 = t;
+          examAllocatedStaff.push({
+            no: toKhNum(staffCounter++),
+            name: t.name,
+            gender: t.gender,
+            originalRole: t.role || 'គ្រូបង្រៀន',
+            examDuty: 'អនុរក្សទី ២',
+            dutyBadgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            assignedRoom: `${r.grade} - ${r.roomName}`,
+            phone: t.phone || '',
+            note: 'អនុរក្សប្រចាំបន្ទប់'
+          });
+        } else {
+          r.proctor2 = null;
+        }
+      });
+
+      // Pass 3: Reserve Proctors / General Committee
+      while (teacherIdx < teachersPool.length) {
+        const t = teachersPool[teacherIdx++];
+        examAllocatedStaff.push({
+          no: toKhNum(staffCounter++),
+          name: t.name,
+          gender: t.gender,
+          originalRole: t.role || 'គ្រូបង្រៀន',
+          examDuty: 'អនុរក្សបម្រុង',
+          dutyBadgeClass: 'bg-slate-100 text-slate-800 border-slate-200',
+          assignedRoom: 'បន្ទប់ប្រឡងបម្រុង / កិច្ចការទូទៅ',
+          phone: t.phone || '',
+          note: 'ជំនួសពេលមានធុរៈ / សណ្តាប់ធ្នាប់'
+        });
+      }
+
+      // Re-render Views
+      renderExamRoomsHTML();
+      if (activeExamView === 'STAFF') {
+        renderProctorTableHTML();
+      }
+    }
+
+    function renderProctorTableHTML() {
+      const container = document.getElementById('examProctorPrintArea');
+      if (!container) return;
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+      const roomCount = (examAllocatedRooms && examAllocatedRooms.length > 0) ? examAllocatedRooms.length : 0;
+
+      if (!examAllocatedStaff || examAllocatedStaff.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm">មិនទាន់មានទិន្នន័យចាត់តាំងគ្រូនៅឡើយទេ សូមចុច «គ្រូគំរូរហ័ស» ឬ «ទាញពីប្រព័ន្ធ»</div>';
+        return;
+      }
+
+      let rowsHtml = '';
+      examAllocatedStaff.forEach(s => {
+        rowsHtml += `
+          <tr class="hover:bg-indigo-50/30 transition border-b border-slate-200">
+            <td class="text-center font-bold text-slate-800 py-2.5">${s.no}</td>
+            <td class="text-left pl-3 font-bold text-slate-900 py-2.5">${s.name}</td>
+            <td class="text-center font-semibold ${s.gender === 'ស្រី' ? 'text-pink-600' : 'text-blue-700'} py-2.5">${s.gender}</td>
+            <td class="text-left pl-3 text-slate-700 py-2.5">${s.originalRole}</td>
+            <td class="text-center py-2.5">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border ${s.dutyBadgeClass}">${s.examDuty}</span>
+            </td>
+            <td class="text-left pl-3 font-medium text-slate-800 py-2.5">${s.assignedRoom}</td>
+            <td class="text-center font-mono text-slate-600 py-2.5">${s.phone || '---'}</td>
+            <td class="text-center text-slate-300 py-2.5">.......................</td>
+          </tr>
+        `;
+      });
+
+      const totalCount = examAllocatedStaff.length;
+      const femaleCount = examAllocatedStaff.filter(s => s.gender === 'ស្រី').length;
+      const proctorsCount = examAllocatedStaff.filter(s => s.examDuty.includes('អនុរក្សទី')).length;
+      const reserveCount = examAllocatedStaff.filter(s => s.examDuty.includes('បម្រុង')).length;
+
+      container.innerHTML = `
+        <div class="exam-room-page bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+          
+          <!-- Official Administrative Header -->
+          <div class="flex justify-between items-start border-b border-slate-300 pb-3">
+            <div class="text-left text-xs font-semibold space-y-0.5 text-slate-800">
+              <p class="font-bold text-sm text-slate-900">រដ្ឋបាលស្រុកតាលោសែនជ័យ</p>
+              <p>ការិយាល័យអប់រំ យុវជន និងកីឡា</p>
+              <p>កម្រង៖ <span class="font-bold text-indigo-800">${cluster}</span></p>
+              <p>សាលាបឋមសិក្សា៖ <span class="font-bold text-slate-900">${school}</span></p>
+            </div>
+
+            <div class="text-center font-bold text-xs space-y-0.5 text-slate-900">
+              <p class="text-sm">ព្រះរាជាណាចក្រកម្ពុជា</p>
+              <p>ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+              <div class="flex justify-center pt-0.5">
+                <svg class="w-16 h-2 text-slate-700" viewBox="0 0 100 10" fill="none"><path d="M0 5 Q 25 0, 50 5 T 100 5" stroke="currentColor" stroke-width="2"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="text-center my-2">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 uppercase tracking-wide">
+              តារាងបំណែងចែកភារកិច្ចគណៈកម្មការ និងអនុរក្សមណ្ឌលប្រឡង
+            </h2>
+            <div class="flex flex-wrap justify-center items-center gap-3 text-xs font-medium text-slate-700 mt-1">
+              <span>សម័យប្រឡង៖ <strong class="text-slate-900">${examSession}</strong></span>
+              <span>•</span>
+              <span>មណ្ឌលប្រឡង៖ <strong class="text-indigo-800 font-bold">${school}</strong></span>
+              <span>•</span>
+              <span class="px-2.5 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">ចំនួនបន្ទប់សរុប៖ ${roomCount} បន្ទប់</span>
+            </div>
+          </div>
+
+          <!-- Summary Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center">
+              <span class="block text-slate-500 text-[10px]">សមាជិកសរុប</span>
+              <strong class="text-sm font-bold text-slate-900">${totalCount} នាក់</strong>
+              <span class="text-[10px] text-pink-600 block">(ស្រី ${femaleCount} នាក់)</span>
+            </div>
+            <div class="p-2.5 bg-purple-50 border border-purple-200 rounded-xl text-center">
+              <span class="block text-purple-700 text-[10px]">គណៈគ្រប់គ្រងមណ្ឌល</span>
+              <strong class="text-sm font-bold text-purple-900">២ នាក់</strong>
+              <span class="text-[10px] text-purple-600 block">(ប្រធាន ១, អនុប្រធាន ១)</span>
+            </div>
+            <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-center">
+              <span class="block text-amber-700 text-[10px]">អនុរក្សតាមបន្ទប់</span>
+              <strong class="text-sm font-bold text-amber-900">${proctorsCount} នាក់</strong>
+              <span class="text-[10px] text-amber-600 block">(២ នាក់ក្នុងមួយបន្ទប់)</span>
+            </div>
+            <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-center">
+              <span class="block text-blue-700 text-[10px]">អនុរក្សបម្រុង</span>
+              <strong class="text-sm font-bold text-blue-900">${reserveCount} នាក់</strong>
+              <span class="text-[10px] text-blue-600 block">(កិច្ចការទូទៅ / ជំនួស)</span>
+            </div>
+          </div>
+
+          <!-- Official Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full exam-table border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-800">
+                  <th style="width: 45px; text-align: center;">ល.រ</th>
+                  <th style="text-align: left; padding-left: 12px;">គោត្តនាម និងនាម</th>
+                  <th style="width: 55px; text-align: center;">ភេទ</th>
+                  <th style="text-align: left; padding-left: 12px; width: 140px;">មុខតំណែងដើម</th>
+                  <th style="width: 140px; text-align: center;">ភារកិច្ចក្នុងមណ្ឌល</th>
+                  <th style="text-align: left; padding-left: 12px;">បន្ទប់ទទួលបន្ទុក</th>
+                  <th style="width: 105px; text-align: center;">លេខទូរស័ព្ទ</th>
+                  <th style="width: 110px; text-align: center;">ហត្ថលេខា</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Signatures Footer -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 px-4 text-xs font-semibold text-slate-800 text-center">
+            <div>
+              <p class="font-bold text-slate-900">បានឃើញ និងឯកភាព</p>
+              <p class="text-[11px] text-slate-700">ប្រធានការិយាល័យអប់រំ យុវជន និងកីឡាស្រុក</p>
+              <div class="h-16"></div>
+            </div>
+
+            <div>
+              <p class="font-bold text-slate-900">អ្នករៀបចំតារាង</p>
+              <p class="text-[11px] text-slate-500">(ហត្ថលេខា និងឈ្មោះ)</p>
+              <div class="h-16"></div>
+            </div>
+
+            <div>
+              <p class="text-[11px] text-slate-600">${location}, ${footerDate}</p>
+              <p class="font-bold text-slate-900">នាយកសាលា - ប្រធានមណ្ឌល</p>
+              <p class="text-[11px] text-slate-500">(ហត្ថលេខា និងត្រា)</p>
+              <div class="h-16"></div>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function exportProctorTableWord() {
+      if (!examAllocatedStaff || examAllocatedStaff.length === 0) {
+        alert('សូមចាត់តាំងគ្រូជាមុនសិន!');
+        return;
+      }
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+      const roomCount = (examAllocatedRooms && examAllocatedRooms.length > 0) ? examAllocatedRooms.length : 0;
+
+      let rows = '';
+      examAllocatedStaff.forEach(s => {
+        rows += `
+          <tr>
+            <td style="text-align:center; font-weight:bold; padding:6px;">${s.no}</td>
+            <td style="text-align:left; padding:6px; font-weight:bold;">${s.name}</td>
+            <td style="text-align:center; padding:6px;">${s.gender}</td>
+            <td style="text-align:left; padding:6px;">${s.originalRole}</td>
+            <td style="text-align:center; padding:6px; font-weight:bold;">${s.examDuty}</td>
+            <td style="text-align:left; padding:6px;">${s.assignedRoom}</td>
+            <td style="text-align:center; padding:6px;">${s.phone || '---'}</td>
+            <td style="text-align:center; padding:6px;">&nbsp;</td>
+          </tr>
+        `;
+      });
+
+      const totalCount = examAllocatedStaff.length;
+      const femaleCount = examAllocatedStaff.filter(s => s.gender === 'ស្រី').length;
+
+      const docContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>តារាងបែងចែកភារកិច្ចគណៈកម្មការ និងអនុរក្សមណ្ឌលប្រឡង</title>
+          <!--[if gte mso 9]>
+          <xml>
+            <w:WordDocument>
+              <w:View>Print</w:View>
+              <w:Zoom>100</w:Zoom>
+              <w:DoNotOptimizeForBrowser/>
+            </w:WordDocument>
+          </xml>
+          <![endif]-->
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+              mso-header-margin: 1cm;
+              mso-footer-margin: 1cm;
+            }
+            body {
+              font-family: 'Kantumruy Pro', 'Khmer OS Battambang', 'Khmer OS Siemreap', 'Segoe UI', Arial, sans-serif;
+              font-size: 10pt;
+              line-height: 1.35;
+              color: #000;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            th, td {
+              border: 1px solid #333;
+              padding: 5px 6px;
+            }
+          </style>
+        </head>
+        <body>
+          <table style="width:100%; border:none; margin-bottom:12px;">
+            <tr>
+              <td style="border:none; text-align:left; width:50%; font-size:11pt; line-height:1.4;">
+                <strong>រដ្ឋបាលស្រុកតាលោសែនជ័យ</strong><br>
+                ការិយាល័យអប់រំ យុវជន និងកីឡា<br>
+                កម្រង៖ <strong>${cluster}</strong><br>
+                សាលាបឋមសិក្សា៖ <strong>${school}</strong>
+              </td>
+              <td style="border:none; text-align:center; width:50%; font-size:11pt; line-height:1.4;">
+                <strong>ព្រះរាជាណាចក្រកម្ពុជា</strong><br>
+                <strong>ជាតិ សាសនា ព្រះមហាក្សត្រ</strong><br>
+                ---------------------
+              </td>
+            </tr>
+          </table>
+
+          <div style="text-align:center; margin:16px 0;">
+            <h2 style="font-size:14pt; font-weight:bold; margin:0;">តារាងបំណែងចែកភារកិច្ចគណៈកម្មការ និងអនុរក្សមណ្ឌលប្រឡង</h2>
+            <p style="font-size:10.5pt; margin:6px 0;">
+              សម័យប្រឡង៖ <strong>${examSession}</strong> &nbsp; | &nbsp; មណ្ឌលប្រឡង៖ <strong>${school}</strong> &nbsp; | &nbsp; <strong>${roomCount} បន្ទប់</strong>
+            </p>
+            <p style="font-size:10pt; margin:4px 0;">
+              សមាជិកសរុប៖ <strong>${totalCount}</strong> នាក់ (ស្រី <strong>${femaleCount}</strong> នាក់)
+            </p>
+          </div>
+
+          <table>
+            <thead>
+              <tr style="background-color:#f1f5f9; font-weight:bold; text-align:center;">
+                <th style="width:40px;">ល.រ</th>
+                <th style="text-align:left;">គោត្តនាម និងនាម</th>
+                <th style="width:45px;">ភេទ</th>
+                <th style="text-align:left; width:130px;">មុខតំណែងដើម</th>
+                <th style="width:130px;">ភារកិច្ចក្នុងមណ្ឌល</th>
+                <th style="text-align:left;">បន្ទប់ទទួលបន្ទុក</th>
+                <th style="width:95px;">លេខទូរស័ព្ទ</th>
+                <th style="width:95px;">ហត្ថលេខា</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <table style="width:100%; border:none; margin-top:30px; font-size:11pt;">
+            <tr>
+              <td style="border:none; text-align:center; width:33%;">
+                <strong>បានឃើញ និងឯកភាព</strong><br>
+                ប្រធានការិយាល័យអប់រំ យុវជន និងកីឡាស្រុក
+                <div style="height:65px;"></div>
+              </td>
+              <td style="border:none; text-align:center; width:33%;">
+                <strong>អ្នករៀបចំតារាង</strong><br>
+                <span style="font-size:9pt; color:#666;">(ហត្ថលេខា និងឈ្មោះ)</span>
+                <div style="height:65px;"></div>
+              </td>
+              <td style="border:none; text-align:center; width:34%;">
+                ${location}, ${footerDate}<br>
+                <strong>នាយកសាលា - ប្រធានមណ្ឌល</strong><br>
+                <span style="font-size:9pt; color:#666;">(ហត្ថលេខា និងត្រា)</span>
+                <div style="height:65px;"></div>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `តារាងបែងចែកគ្រូ_អនុរក្ស_${school}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('បានទាញយកតារាងគ្រូជា Word (.doc) ជោគជ័យ!');
+    }
+
+    function exportProctorTableExcel() {
+      if (!examAllocatedStaff || examAllocatedStaff.length === 0) {
+        alert('សូមចាត់តាំងគ្រូជាមុនសិន!');
+        return;
+      }
+
+      const school = document.getElementById('examSchoolSelect').value;
+      const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
+      const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
+      const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
+      const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
+      const roomCount = (examAllocatedRooms && examAllocatedRooms.length > 0) ? examAllocatedRooms.length : 0;
+
+      const wb = XLSX.utils.book_new();
+      const rows = [
+        ['រដ្ឋបាលស្រុកតាលោសែនជ័យ', '', '', '', 'ព្រះរាជាណាចក្រកម្ពុជា'],
+        ['ការិយាល័យអប់រំ យុវជន និងកីឡា', '', '', '', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'],
+        [`កម្រង៖ ${cluster}`],
+        [`សាលាបឋមសិក្សា៖ ${school}`],
+        [''],
+        ['តារាងបំណែងចែកភារកិច្ចគណៈកម្មការ និងអនុរក្សមណ្ឌលប្រឡង'],
+        [`សម័យប្រឡង៖ ${examSession}    មណ្ឌលប្រឡង៖ ${school}    ចំនួនបន្ទប់សរុប៖ ${roomCount} បន្ទប់`],
+        [`សមាជិកសរុប៖ ${examAllocatedStaff.length} នាក់`],
+        [''],
+        ['ល.រ', 'គោត្តនាម និងនាម', 'ភេទ', 'មុខតំណែងដើម', 'ភារកិច្ចក្នុងមណ្ឌល', 'បន្ទប់ទទួលបន្ទុក', 'លេខទូរស័ព្ទ', 'ហត្ថលេខា']
+      ];
+
+      examAllocatedStaff.forEach(s => {
+        rows.push([
+          s.no,
+          s.name,
+          s.gender,
+          s.originalRole,
+          s.examDuty,
+          s.assignedRoom,
+          s.phone,
+          ''
+        ]);
+      });
+
+      rows.push(
+        [''],
+        ['បានឃើញ និងឯកភាព', '', 'អ្នករៀបចំតារាង', '', `${location}, ${footerDate}`],
+        ['ប្រធានការិយាល័យអប់រំ យុវជន និងកីឡាស្រុក', '', '(ហត្ថលេខា និងឈ្មោះ)', '', 'នាយកសាលា - ប្រធានមណ្ឌល'],
+        ['(ហត្ថលេខា និងត្រា)', '', '', '', '(ហត្ថលេខា និងត្រា)']
+      );
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'តារាងបែងចែកអនុរក្ស');
+      XLSX.writeFile(wb, `តារាងបែងចែកគ្រូ_អនុរក្ស_${school}.xlsx`);
+      showToast('បានទាញយកតារាងគ្រូជា Excel (.xlsx) ជោគជ័យ!');
+    }
+
+    function printProctorTable() {
+      if (!examAllocatedStaff || examAllocatedStaff.length === 0) {
+        alert('សូមចាត់តាំងគ្រូជាមុនសិន!');
+        return;
+      }
+      setExamViewMode('STAFF');
+      window.print();
+    }
+
   </script>
 </body>
 </html>
