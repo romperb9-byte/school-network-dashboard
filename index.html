@@ -449,8 +449,18 @@
                     <input type="text" id="examClusterInput" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-semibold text-indigo-700" placeholder="កម្រង...">
                   </div>
                   <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">ថ្នាក់ទី / កម្រិត៖</label>
-                    <input type="text" id="examGradeInput" value="ថ្នាក់ទី ៦-ក" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">កម្រិតថ្នាក់ប្រឡង៖</label>
+                    <select id="examGradeScope" onchange="onExamGradeScopeChange()" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-bold text-indigo-700">
+                      <option value="ALL_PRIMARY" selected>⭐ គ្រប់កម្រិតថ្នាក់ (ពីថ្នាក់ទី ១ ដល់ ទី ៦)</option>
+                      <option value="1">ថ្នាក់ទី ១</option>
+                      <option value="2">ថ្នាក់ទី ២</option>
+                      <option value="3">ថ្នាក់ទី ៣</option>
+                      <option value="4">ថ្នាក់ទី ៤</option>
+                      <option value="5">ថ្នាក់ទី ៥</option>
+                      <option value="6">ថ្នាក់ទី ៦</option>
+                      <option value="CUSTOM">ថ្នាក់ជាក់លាក់... (កែសម្រួលផ្ទាល់)</option>
+                    </select>
+                    <input type="text" id="examGradeCustomInput" value="ថ្នាក់ទី ៦-ក" class="hidden mt-1.5 w-full text-xs p-2 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-medium" placeholder="វាយឈ្មោះថ្នាក់ (ឧ. ថ្នាក់ទី ៦-ក)...">
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">សម័យប្រឡង៖</label>
@@ -533,33 +543,52 @@
 
                 <!-- Sub-tab 1: Quick Sample Generator -->
                 <div id="sourcePanel-sample" class="space-y-3">
-                  <p class="text-xs text-slate-500">បង្កើតបញ្ជីឈ្មោះសិស្សខ្មែរ-ឡាតាំង ភេទ និងថ្ងៃខែឆ្នាំកំណើតដោយស្វ័យប្រវត្តិតាមចំនួនកំណត់៖</p>
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">សិស្សសរុប (នាក់)៖</label>
-                      <input type="number" id="sampleTotalCount" value="45" min="1" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-bold text-center">
+                  <p class="text-xs text-slate-500" id="sampleDescText">បង្កើតបញ្ជីឈ្មោះសិស្សខ្មែរ-ឡាតាំង ភេទ និងថ្ងៃខែឆ្នាំកំណើតដោយស្វ័យប្រវត្តិ៖</p>
+                  
+                  <div id="sampleInputsPrimary" class="space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">សិស្សក្នុង ១ថ្នាក់ (នាក់)៖</label>
+                        <input type="number" id="samplePerGradeCount" value="35" min="1" max="100" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-bold text-center">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">ស្រីក្នុង ១ថ្នាក់ (នាក់)៖</label>
+                        <input type="number" id="samplePerGradeFemale" value="18" min="0" max="100" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 font-bold text-pink-600 text-center">
+                      </div>
                     </div>
-                    <div>
-                      <label class="block text-[11px] font-semibold text-slate-600 mb-1">ក្នុងនោះសិស្សស្រី (នាក់)៖</label>
-                      <input type="number" id="sampleFemaleCount" value="22" min="0" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 font-bold text-pink-600 text-center">
-                    </div>
+                    <button onclick="generateSampleCandidates()" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                      <span>✨</span> <span>បង្កើតគំរូ ៦កម្រិតថ្នាក់ (ទី១ ដល់ ទី៦ = ២១០នាក់)</span>
+                    </button>
                   </div>
-                  <button onclick="generateSampleCandidates()" class="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                    <span>✨</span> <span>បង្កើតសិស្សគំរូ ៤៥ នាក់</span>
-                  </button>
+
+                  <div id="sampleInputsSingle" class="hidden space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">សិស្សសរុប (នាក់)៖</label>
+                        <input type="number" id="sampleTotalCount" value="45" min="1" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 font-bold text-center">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">ក្នុងនោះសិស្សស្រី (នាក់)៖</label>
+                        <input type="number" id="sampleFemaleCount" value="22" min="0" max="500" class="w-full text-xs p-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 font-bold text-pink-600 text-center">
+                      </div>
+                    </div>
+                    <button onclick="generateSampleCandidates()" class="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                      <span>✨</span> <span>បង្កើតសិស្សគំរូ</span>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Sub-tab 2: Live Sheets Data -->
                 <div id="sourcePanel-live" class="hidden space-y-3">
-                  <p class="text-xs text-slate-500">ទាញយកសិស្សដែលមានស្រាប់ក្នុង Google Sheets តាមសាលា និងថ្នាក់៖</p>
+                  <p class="text-xs text-slate-500">ទាញយកសិស្សដែលមានស្រាប់ក្នុង Google Sheets តាមសាលា និងកម្រិតថ្នាក់៖</p>
                   <div>
                     <label class="block text-[11px] font-semibold text-slate-600 mb-1">ជ្រើសរើសថ្នាក់ក្នុងប្រព័ន្ធ៖</label>
                     <select id="examLiveClassSelect" class="w-full text-xs p-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                      <option value="">-- សូមជ្រើសរើសថ្នាក់ --</option>
+                      <option value="ALL">-- គ្រប់កម្រិតថ្នាក់ (ថ្នាក់ទី ១ ដល់ ទី ៦) --</option>
                     </select>
                   </div>
-                  <button onclick="loadCandidatesFromLiveSystem()" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-                    <span>📥</span> <span>ទាញយកទិន្នន័យសិស្សពីប្រព័ន្ធ</span>
+                  <button onclick="loadCandidatesFromLiveSystem()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                    <span>📥</span> <span>ទាញយកទិន្នន័យសិស្សពីប្រព័ន្ធ (Live Data)</span>
                   </button>
                 </div>
 
@@ -597,16 +626,47 @@
           </div>
 
           <!-- Allocated Results & Printable View -->
-          <div id="examResultContainer" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+          <div id="examResultContainer" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
             
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                <h4 class="text-sm font-bold text-slate-800">លទ្ធផលបែងចែកបន្ទប់ប្រឡង</h4>
-                <span id="examRoomSummaryText" class="text-xs font-semibold text-slate-500"></span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h4 class="text-sm font-bold text-slate-800">លទ្ធផលបែងចែកបន្ទប់ប្រឡង</h4>
+                </div>
+                <p id="examRoomSummaryText" class="text-xs font-semibold text-indigo-700 mt-0.5"></p>
               </div>
 
-              <!-- Room Tabs / Selector -->
+              <!-- Action buttons in Result bar -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="exportExamRoomsWord()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  📄 <span>Word (.doc)</span>
+                </button>
+                <button onclick="exportExamRoomsExcel()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  📊 <span>Excel (.xlsx)</span>
+                </button>
+                <button onclick="printExamRooms()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1 shadow-sm">
+                  🖨️ <span>បោះពុម្ព / PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grade Breakdown Cards (Grid for Grade 1 through Grade 6) -->
+            <div id="examGradeBreakdownCards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Grade Tabs / Selector -->
+            <div id="examGradeFilterContainer" class="flex items-center gap-2 flex-wrap border-b border-slate-100 pb-2.5">
+              <span class="text-xs font-bold text-slate-600">កម្រិតថ្នាក់៖</span>
+              <div id="examGradeFilterTabs" class="flex items-center gap-1.5 flex-wrap">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+
+            <!-- Room Tabs / Selector -->
+            <div id="examRoomFilterContainer" class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-slate-600">បន្ទប់ប្រឡង៖</span>
               <div id="examRoomFilterTabs" class="flex items-center gap-1.5 flex-wrap">
                 <!-- Populated dynamically via JS -->
               </div>
@@ -1713,7 +1773,10 @@
 
     let examCandidateList = [];
     let examAllocatedRooms = [];
+    let activeExamGradeFilter = 'ALL';
     let activeExamRoomTab = 'ALL';
+
+    const PRIMARY_GRADES = ['ថ្នាក់ទី ១', 'ថ្នាក់ទី ២', 'ថ្នាក់ទី ៣', 'ថ្នាក់ទី ៤', 'ថ្នាក់ទី ៥', 'ថ្នាក់ទី ៦'];
 
     const KHMER_SURNAMES = [
       { kh: "សុខ", en: "Sok" }, { kh: "ចាន់", en: "Chan" }, { kh: "ហេង", en: "Heng" },
@@ -1744,6 +1807,7 @@
     function initExamRoomModule() {
       populateExamSchoolsDropdown();
       updateAllocModeUI();
+      onExamGradeScopeChange();
       generateSampleCandidates();
     }
 
@@ -1777,10 +1841,71 @@
       updateExamLiveClassDropdown(schoolName);
     }
 
+    function onExamGradeScopeChange() {
+      const scope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
+      const customInput = document.getElementById('examGradeCustomInput');
+      const samplePrimary = document.getElementById('sampleInputsPrimary');
+      const sampleSingle = document.getElementById('sampleInputsSingle');
+      const sampleDesc = document.getElementById('sampleDescText');
+
+      if (customInput) {
+        if (scope === 'CUSTOM') {
+          customInput.classList.remove('hidden');
+        } else {
+          customInput.classList.add('hidden');
+        }
+      }
+
+      if (samplePrimary && sampleSingle) {
+        if (scope === 'ALL_PRIMARY') {
+          samplePrimary.classList.remove('hidden');
+          sampleSingle.classList.add('hidden');
+          if (sampleDesc) sampleDesc.textContent = 'បង្កើតបញ្ជីឈ្មោះសិស្សគំរូគ្រប់កម្រិតថ្នាក់ (ពីថ្នាក់ទី ១ ដល់ ទី ៦) ដោយស្វ័យប្រវត្តិ៖';
+        } else {
+          samplePrimary.classList.add('hidden');
+          sampleSingle.classList.remove('hidden');
+          const gradeText = getSelectedGradeText();
+          if (sampleDesc) sampleDesc.textContent = `បង្កើតបញ្ជីឈ្មោះសិស្សគំរូសម្រាប់ «${gradeText}» ដោយស្វ័យប្រវត្តិ៖`;
+        }
+      }
+
+      const school = document.getElementById('examSchoolSelect') ? document.getElementById('examSchoolSelect').value : '';
+      updateExamLiveClassDropdown(school);
+    }
+
+    function getSelectedGradeText() {
+      const scope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
+      if (scope === 'ALL_PRIMARY') return 'គ្រប់កម្រិតថ្នាក់ (ទី១ ដល់ ទី៦)';
+      if (scope === '1') return 'ថ្នាក់ទី ១';
+      if (scope === '2') return 'ថ្នាក់ទី ២';
+      if (scope === '3') return 'ថ្នាក់ទី ៣';
+      if (scope === '4') return 'ថ្នាក់ទី ៤';
+      if (scope === '5') return 'ថ្នាក់ទី ៥';
+      if (scope === '6') return 'ថ្នាក់ទី ៦';
+      if (scope === 'CUSTOM') {
+        const customInput = document.getElementById('examGradeCustomInput');
+        return (customInput && customInput.value.trim()) ? customInput.value.trim() : 'ថ្នាក់ទី ៦';
+      }
+      return 'ថ្នាក់ទី ៦';
+    }
+
+    function extractGradeLevel(gradeStr) {
+      if (!gradeStr) return 'ថ្នាក់ទី ៦';
+      const s = toArabicDigits(String(gradeStr).trim());
+      if (/^1|ថ្នាក់ទី\s*1|ទី\s*1/i.test(s)) return 'ថ្នាក់ទី ១';
+      if (/^2|ថ្នាក់ទី\s*2|ទី\s*2/i.test(s)) return 'ថ្នាក់ទី ២';
+      if (/^3|ថ្នាក់ទី\s*3|ទី\s*3/i.test(s)) return 'ថ្នាក់ទី ៣';
+      if (/^4|ថ្នាក់ទី\s*4|ទី\s*4/i.test(s)) return 'ថ្នាក់ទី ៤';
+      if (/^5|ថ្នាក់ទី\s*5|ទី\s*5/i.test(s)) return 'ថ្នាក់ទី ៥';
+      if (/^6|ថ្នាក់ទី\s*6|ទី\s*6/i.test(s)) return 'ថ្នាក់ទី ៦';
+      return 'ថ្នាក់ទី ៦';
+    }
+
     function updateExamLiveClassDropdown(schoolName) {
       const liveSelect = document.getElementById('examLiveClassSelect');
       if (!liveSelect) return;
-      liveSelect.innerHTML = '<option value="">-- សូមជ្រើសរើសថ្នាក់ --</option>';
+
+      let html = '<option value="ALL">-- គ្រប់កម្រិតថ្នាក់ (ថ្នាក់ទី ១ ដល់ ទី ៦) --</option>';
 
       const cleanSchool = (schoolName || '').replace('សាលាបឋមសិក្សា', '').trim();
       const filtered = localData.students.filter(s => {
@@ -1794,11 +1919,10 @@
       }
 
       classSet.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = `ថ្នាក់ ${c}`;
-        liveSelect.appendChild(opt);
+        html += `<option value="${c}">ថ្នាក់ ${c}</option>`;
       });
+
+      liveSelect.innerHTML = html;
     }
 
     function setExamSourceTab(tabName) {
@@ -1840,78 +1964,168 @@
     }
 
     function generateSampleCandidates() {
-      const totInput = document.getElementById('sampleTotalCount');
-      const femInput = document.getElementById('sampleFemaleCount');
-      const total = Math.max(1, parseInt(totInput ? totInput.value : 45, 10) || 45);
-      const female = Math.min(total, Math.max(0, parseInt(femInput ? femInput.value : 22, 10) || 22));
-      const male = total - female;
-
-      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦-ក';
+      const scope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
       const list = [];
 
-      for (let i = 0; i < male; i++) {
-        const s = KHMER_SURNAMES[i % KHMER_SURNAMES.length];
-        const g = KHMER_MALES[i % KHMER_MALES.length];
-        const day = String((i % 28) + 1).padStart(2, '0');
-        const month = String(((i * 3) % 12) + 1).padStart(2, '0');
-        list.push({
-          nameKh: `${s.kh} ${g.kh}`,
-          nameEn: `${s.en} ${g.en}`,
-          gender: 'ប្រុស',
-          dob: `${day}/${month}/2014`,
-          originClass: grade
+      if (scope === 'ALL_PRIMARY') {
+        const perGradeInput = document.getElementById('samplePerGradeCount');
+        const perFemInput = document.getElementById('samplePerGradeFemale');
+        const countPerGrade = Math.max(1, parseInt(perGradeInput ? perGradeInput.value : 35, 10) || 35);
+        const femalePerGrade = Math.min(countPerGrade, Math.max(0, parseInt(perFemInput ? perFemInput.value : 18, 10) || 18));
+        const malePerGrade = countPerGrade - femalePerGrade;
+
+        const gradeBirthYears = {
+          'ថ្នាក់ទី ១': 2019,
+          'ថ្នាក់ទី ២': 2018,
+          'ថ្នាក់ទី ៣': 2017,
+          'ថ្នាក់ទី ៤': 2016,
+          'ថ្នាក់ទី ៥': 2015,
+          'ថ្នាក់ទី ៦': 2014
+        };
+
+        PRIMARY_GRADES.forEach((gLabel, gIdx) => {
+          const year = gradeBirthYears[gLabel] || (2019 - gIdx);
+          const shortClass = `${gIdx + 1}-ក`;
+          const gradeList = [];
+
+          // Males
+          for (let m = 0; m < malePerGrade; m++) {
+            const s = KHMER_SURNAMES[(m + gIdx * 3) % KHMER_SURNAMES.length];
+            const g = KHMER_MALES[(m + gIdx * 2) % KHMER_MALES.length];
+            const day = String((m % 28) + 1).padStart(2, '0');
+            const month = String(((m * 3 + gIdx) % 12) + 1).padStart(2, '0');
+            gradeList.push({
+              nameKh: `${s.kh} ${g.kh}`,
+              nameEn: `${s.en} ${g.en}`,
+              gender: 'ប្រុស',
+              dob: `${day}/${month}/${year}`,
+              originClass: shortClass,
+              canonicalGrade: gLabel
+            });
+          }
+
+          // Females
+          for (let f = 0; f < femalePerGrade; f++) {
+            const s = KHMER_SURNAMES[(f + gIdx * 2 + 5) % KHMER_SURNAMES.length];
+            const g = KHMER_FEMALES[(f + gIdx * 3) % KHMER_FEMALES.length];
+            const day = String((f % 28) + 1).padStart(2, '0');
+            const month = String(((f * 2 + gIdx) % 12) + 1).padStart(2, '0');
+            gradeList.push({
+              nameKh: `${s.kh} ${g.kh}`,
+              nameEn: `${s.en} ${g.en}`,
+              gender: 'ស្រី',
+              dob: `${day}/${month}/${year}`,
+              originClass: shortClass,
+              canonicalGrade: gLabel
+            });
+          }
+
+          gradeList.sort((a, b) => a.nameKh.localeCompare(b.nameKh, 'km'));
+          gradeList.forEach(item => list.push(item));
         });
+
+      } else {
+        // Single Grade
+        const totInput = document.getElementById('sampleTotalCount');
+        const femInput = document.getElementById('sampleFemaleCount');
+        const total = Math.max(1, parseInt(totInput ? totInput.value : 45, 10) || 45);
+        const female = Math.min(total, Math.max(0, parseInt(femInput ? femInput.value : 22, 10) || 22));
+        const male = total - female;
+        const gLabel = getSelectedGradeText();
+        const year = 2014;
+
+        for (let i = 0; i < male; i++) {
+          const s = KHMER_SURNAMES[i % KHMER_SURNAMES.length];
+          const g = KHMER_MALES[i % KHMER_MALES.length];
+          const day = String((i % 28) + 1).padStart(2, '0');
+          const month = String(((i * 3) % 12) + 1).padStart(2, '0');
+          list.push({
+            nameKh: `${s.kh} ${g.kh}`,
+            nameEn: `${s.en} ${g.en}`,
+            gender: 'ប្រុស',
+            dob: `${day}/${month}/${year}`,
+            originClass: gLabel,
+            canonicalGrade: gLabel
+          });
+        }
+
+        for (let i = 0; i < female; i++) {
+          const s = KHMER_SURNAMES[(i + 5) % KHMER_SURNAMES.length];
+          const g = KHMER_FEMALES[i % KHMER_FEMALES.length];
+          const day = String((i % 28) + 1).padStart(2, '0');
+          const month = String(((i * 2 + 1) % 12) + 1).padStart(2, '0');
+          list.push({
+            nameKh: `${s.kh} ${g.kh}`,
+            nameEn: `${s.en} ${g.en}`,
+            gender: 'ស្រី',
+            dob: `${day}/${month}/${year}`,
+            originClass: gLabel,
+            canonicalGrade: gLabel
+          });
+        }
+        list.sort((a, b) => a.nameKh.localeCompare(b.nameKh, 'km'));
       }
 
-      for (let i = 0; i < female; i++) {
-        const s = KHMER_SURNAMES[(i + 5) % KHMER_SURNAMES.length];
-        const g = KHMER_FEMALES[i % KHMER_FEMALES.length];
-        const day = String((i % 28) + 1).padStart(2, '0');
-        const month = String(((i * 2 + 1) % 12) + 1).padStart(2, '0');
-        list.push({
-          nameKh: `${s.kh} ${g.kh}`,
-          nameEn: `${s.en} ${g.en}`,
-          gender: 'ស្រី',
-          dob: `${day}/${month}/2014`,
-          originClass: grade
-        });
-      }
-
-      list.sort((a, b) => a.nameKh.localeCompare(b.nameKh, 'km'));
       examCandidateList = list;
       updateCandidateCountBadge();
       processRoomAllocation();
     }
 
     function loadCandidatesFromLiveSystem() {
+      const scope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
       const classSelect = document.getElementById('examLiveClassSelect');
-      const grade = classSelect ? classSelect.value : '';
+      const selectedClass = classSelect ? classSelect.value : 'ALL';
       const school = document.getElementById('examSchoolSelect').value;
       const cleanSchool = (school || '').replace('សាលាបឋមសិក្សា', '').trim();
 
-      let matched = localData.students.filter(s => {
+      let pool = localData.students.filter(s => {
         const sc = (s.school || '').trim();
-        const matchesSchool = sc.includes(cleanSchool) || cleanSchool.includes(sc);
-        const matchesClass = !grade || s.grade === grade;
-        return matchesSchool && matchesClass;
+        return sc.includes(cleanSchool) || cleanSchool.includes(sc);
       });
 
-      if (matched.length === 0 && grade) {
-        matched = localData.students.filter(s => s.grade === grade);
+      if (pool.length === 0) {
+        pool = localData.students;
+      }
+
+      let matched = [];
+
+      if (scope === 'ALL_PRIMARY' && (selectedClass === 'ALL' || !selectedClass)) {
+        matched = pool.filter(s => {
+          const g = extractGradeLevel(s.grade);
+          return PRIMARY_GRADES.includes(g);
+        });
+      } else {
+        if (selectedClass && selectedClass !== 'ALL') {
+          matched = pool.filter(s => s.grade === selectedClass);
+        } else {
+          const targetG = getSelectedGradeText();
+          matched = pool.filter(s => extractGradeLevel(s.grade) === targetG);
+        }
       }
 
       if (matched.length === 0) {
-        alert('មិនទាន់មានទិន្នន័យសិស្សសម្រាប់សាលា ឬថ្នាក់នេះនៅឡើយទេ! សូមប្រើជម្រើស «បង្កើតសិស្សគំរូរហ័ស» ឬ «នាំចូល Excel»។');
+        alert('មិនមានទិន្នន័យសិស្សសម្រាប់សាលានេះក្នុងប្រព័ន្ធ Live Data នៅឡើយទេ! សូមប្រើជម្រើស «បង្កើតសិស្សគំរូរហ័ស» ឬ «នាំចូល Excel»។');
         return;
       }
 
-      examCandidateList = matched.map(s => ({
-        nameKh: s.name,
-        nameEn: transliterateKhmerToLatin(s.name),
-        gender: s.gender || 'ប្រុស',
-        dob: s.dob || '—',
-        originClass: s.grade || grade || 'ថ្នាក់ទី ៦'
-      }));
+      examCandidateList = matched.map(s => {
+        const cGrade = extractGradeLevel(s.grade);
+        return {
+          nameKh: s.name,
+          nameEn: transliterateKhmerToLatin(s.name),
+          gender: s.gender || 'ប្រុស',
+          dob: s.dob || '—',
+          originClass: s.grade || cGrade,
+          canonicalGrade: cGrade
+        };
+      });
+
+      examCandidateList.sort((a, b) => {
+        const ia = PRIMARY_GRADES.indexOf(a.canonicalGrade);
+        const ib = PRIMARY_GRADES.indexOf(b.canonicalGrade);
+        if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        return a.nameKh.localeCompare(b.nameKh, 'km');
+      });
 
       updateCandidateCountBadge();
       showToast(`បានទាញយកសិស្សចំនួន ${examCandidateList.length} នាក់ពីប្រព័ន្ធ!`);
@@ -1931,7 +2145,8 @@
           const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
           const candidates = [];
-          const curGrade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+          const curScope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
+          const defaultGrade = curScope === 'ALL_PRIMARY' ? 'ថ្នាក់ទី ៦' : getSelectedGradeText();
 
           for (let r = 0; r < rows.length; r++) {
             const row = rows[r];
@@ -1941,6 +2156,7 @@
             let genderVal = 'ប្រុស';
             let dobVal = '—';
             let latinVal = '';
+            let gradeVal = defaultGrade;
 
             for (let c = 0; c < row.length; c++) {
               const cell = String(row[c] || '').trim();
@@ -1957,21 +2173,31 @@
                 latinVal = cell;
               } else if (/[\u1780-\u17FF]/.test(cell) && cell.length >= 3 && !nameVal) {
                 nameVal = cell;
+              } else if (/(?:ថ្នាក់ទី|ទី)?\s*[1-6]/.test(cell)) {
+                gradeVal = cell;
               }
             }
 
-            if (nameVal && !nameVal.includes('សរុប') && !nameVal.includes('ថ្នាក់')) {
+            if (nameVal && !nameVal.includes('សរុប')) {
+              const cGrade = extractGradeLevel(gradeVal);
               candidates.push({
                 nameKh: nameVal,
                 nameEn: latinVal || transliterateKhmerToLatin(nameVal),
                 gender: genderVal,
                 dob: dobVal,
-                originClass: curGrade
+                originClass: gradeVal,
+                canonicalGrade: cGrade
               });
             }
           }
 
           if (candidates.length > 0) {
+            candidates.sort((a, b) => {
+              const ia = PRIMARY_GRADES.indexOf(a.canonicalGrade);
+              const ib = PRIMARY_GRADES.indexOf(b.canonicalGrade);
+              if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+              return a.nameKh.localeCompare(b.nameKh, 'km');
+            });
             examCandidateList = candidates;
             updateCandidateCountBadge();
             showToast(`បានបញ្ចូលសិស្សចំនួន ${candidates.length} នាក់ពីឯកសារ Excel!`);
@@ -1996,7 +2222,7 @@
       }
 
       const lines = text.split('\n');
-      const curGrade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
+      const defaultGrade = getSelectedGradeText();
       const list = [];
 
       lines.forEach(line => {
@@ -2006,6 +2232,7 @@
         const name = parts[0] || '';
         let gender = 'ប្រុស';
         let dob = '—';
+        let gradeVal = defaultGrade;
 
         if (parts[1]) {
           if (parts[1] === 'ស្រី' || parts[1] === 'ស' || parts[1].toLowerCase() === 'f') gender = 'ស្រី';
@@ -2014,19 +2241,30 @@
         if (parts[2]) {
           dob = parts[2];
         }
+        if (parts[3]) {
+          gradeVal = parts[3];
+        }
 
         if (name) {
+          const cGrade = extractGradeLevel(gradeVal);
           list.push({
             nameKh: name,
             nameEn: transliterateKhmerToLatin(name),
             gender: gender,
             dob: dob,
-            originClass: curGrade
+            originClass: gradeVal,
+            canonicalGrade: cGrade
           });
         }
       });
 
       if (list.length > 0) {
+        list.sort((a, b) => {
+          const ia = PRIMARY_GRADES.indexOf(a.canonicalGrade);
+          const ib = PRIMARY_GRADES.indexOf(b.canonicalGrade);
+          if (ia !== ib) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+          return a.nameKh.localeCompare(b.nameKh, 'km');
+        });
         examCandidateList = list;
         updateCandidateCountBadge();
         showToast(`បានបញ្ចូលសិស្សចំនួន ${list.length} នាក់!`);
@@ -2048,90 +2286,189 @@
 
     function processRoomAllocation() {
       if (!examCandidateList || examCandidateList.length === 0) {
-        alert('សូមបញ្ចូលទិន្នន័យសិស្សជាមុនសិន (បង្កើតគំរូ, នាំចូល Excel, ឬ Paste ឈ្មោះ)!');
+        alert('សូមបញ្ចូលទិន្នន័យសិស្សជាមុនសិន!');
         return;
       }
 
+      const scope = document.getElementById('examGradeScope') ? document.getElementById('examGradeScope').value : 'ALL_PRIMARY';
       const modeRadio = document.querySelector('input[name="examAllocMode"]:checked');
       const mode = modeRadio ? modeRadio.value : 'perRoom';
-      const totalCandidates = examCandidateList.length;
+      const perRoomInput = document.getElementById('examPerRoomCount');
+      const perRoom = Math.max(1, parseInt(perRoomInput ? perRoomInput.value : 20, 10) || 20);
+      const customRoomsInput = document.getElementById('examCustomRoomsCount');
+      const customRoomsCount = Math.max(1, parseInt(customRoomsInput ? customRoomsInput.value : 2, 10) || 2);
 
-      let roomSizes = [];
+      const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+      const toKhNum = n => String(n).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
 
-      if (mode === 'splitTwo') {
-        const half = Math.ceil(totalCandidates / 2);
-        roomSizes = [half, totalCandidates - half];
-      } else if (mode === 'customRooms') {
-        const countInput = document.getElementById('examCustomRoomsCount');
-        const numRooms = Math.max(1, parseInt(countInput ? countInput.value : 2, 10) || 2);
-        const base = Math.floor(totalCandidates / numRooms);
-        const remainder = totalCandidates % numRooms;
-        for (let i = 0; i < numRooms; i++) {
-          roomSizes.push(base + (i < remainder ? 1 : 0));
-        }
+      let gradesToProcess = [];
+      if (scope === 'ALL_PRIMARY') {
+        gradesToProcess = PRIMARY_GRADES;
       } else {
-        const perRoomInput = document.getElementById('examPerRoomCount');
-        const perRoom = Math.max(1, parseInt(perRoomInput ? perRoomInput.value : 20, 10) || 20);
-        let rem = totalCandidates;
-        while (rem > 0) {
-          const take = Math.min(perRoom, rem);
-          roomSizes.push(take);
-          rem -= take;
-        }
+        const curTarget = getSelectedGradeText();
+        gradesToProcess = [curTarget];
       }
 
-      let curIndex = 0;
-      examAllocatedRooms = roomSizes.map((size, roomIdx) => {
-        const slice = examCandidateList.slice(curIndex, curIndex + size);
-        curIndex += size;
-        const khmerNums = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
-        const roomNoKh = String(roomIdx + 1).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
-        
-        const students = slice.map((st, idx) => {
-          const seatNo = String(idx + 1).padStart(2, '0').split('').map(d => khmerNums[parseInt(d, 10)]).join('');
-          const candId = `TLC-${String(curIndex - size + idx + 1).padStart(3, '0')}`;
-          return {
-            ...st,
-            seatNo: seatNo,
-            candidateId: candId
-          };
+      examAllocatedRooms = [];
+      let overallCandidateIndex = 0;
+
+      gradesToProcess.forEach((gradeName) => {
+        const gradeCandidates = examCandidateList.filter(s => {
+          if (scope === 'ALL_PRIMARY') {
+            return (s.canonicalGrade || extractGradeLevel(s.originClass)) === gradeName;
+          }
+          return true;
         });
 
-        const femaleCount = students.filter(s => s.gender === 'ស្រី').length;
+        if (gradeCandidates.length === 0) return;
 
-        return {
-          roomNumber: roomIdx + 1,
-          roomName: `បន្ទប់លេខ ${roomNoKh}`,
-          roomNoKh: roomNoKh,
-          students: students,
-          femaleCount: femaleCount
-        };
+        let roomSizes = [];
+        const tot = gradeCandidates.length;
+
+        if (mode === 'splitTwo') {
+          const half = Math.ceil(tot / 2);
+          roomSizes = [half, tot - half];
+        } else if (mode === 'customRooms') {
+          const numR = customRoomsCount;
+          const base = Math.floor(tot / numR);
+          const remainder = tot % numR;
+          for (let i = 0; i < numR; i++) {
+            roomSizes.push(base + (i < remainder ? 1 : 0));
+          }
+        } else {
+          // perRoom
+          let rem = tot;
+          while (rem > 0) {
+            const take = Math.min(perRoom, rem);
+            roomSizes.push(take);
+            rem -= take;
+          }
+        }
+
+        let curGradeIdx = 0;
+        roomSizes.forEach((size, rIdx) => {
+          const slice = gradeCandidates.slice(curGradeIdx, curGradeIdx + size);
+          curGradeIdx += size;
+          const roomNoKh = toKhNum(rIdx + 1);
+
+          const students = slice.map((st, idx) => {
+            overallCandidateIndex++;
+            const seatNo = toKhNum(idx + 1);
+            const candId = `TLC-${String(overallCandidateIndex).padStart(3, '0')}`;
+            return {
+              ...st,
+              seatNo: seatNo,
+              candidateId: candId
+            };
+          });
+
+          const femaleCount = students.filter(s => s.gender === 'ស្រី').length;
+
+          examAllocatedRooms.push({
+            grade: gradeName,
+            roomNumberInGrade: rIdx + 1,
+            roomName: `បន្ទប់លេខ ${roomNoKh}`,
+            fullTitle: `${gradeName} - បន្ទប់លេខ ${roomNoKh}`,
+            students: students,
+            femaleCount: femaleCount,
+            totalCount: students.length
+          });
+        });
       });
 
+      renderGradeBreakdownCards();
+      renderGradeFilterTabs();
       renderRoomFilterTabs();
       renderExamRoomsHTML();
 
       const summaryText = document.getElementById('examRoomSummaryText');
       if (summaryText) {
-        summaryText.textContent = `| បេក្ខជនសរុប៖ ${totalCandidates} នាក់ | ចែកបាន៖ ${examAllocatedRooms.length} បន្ទប់`;
+        const totalAllocated = examAllocatedRooms.reduce((acc, r) => acc + r.students.length, 0);
+        const femaleAllocated = examAllocatedRooms.reduce((acc, r) => acc + r.femaleCount, 0);
+        summaryText.textContent = `បេក្ខជនសរុប៖ ${totalAllocated} នាក់ (ស្រី ${femaleAllocated} នាក់) | ចែកបានសរុប៖ ${examAllocatedRooms.length} បន្ទប់`;
       }
+    }
+
+    function renderGradeBreakdownCards() {
+      const container = document.getElementById('examGradeBreakdownCards');
+      if (!container) return;
+
+      let html = '';
+      PRIMARY_GRADES.forEach(gName => {
+        const rooms = examAllocatedRooms.filter(r => r.grade === gName);
+        const stCount = rooms.reduce((acc, r) => acc + r.students.length, 0);
+        const fCount = rooms.reduce((acc, r) => acc + r.femaleCount, 0);
+        const rCount = rooms.length;
+
+        html += `
+          <div onclick="setExamGradeFilter('${gName}')" class="p-2.5 rounded-xl border cursor-pointer transition ${activeExamGradeFilter === gName ? 'bg-amber-500 text-white border-amber-600 shadow' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'}">
+            <p class="text-[11px] font-bold truncate">${gName}</p>
+            <p class="text-sm font-extrabold mt-0.5">${stCount} <span class="text-[10px] font-normal">នាក់</span></p>
+            <p class="text-[10px] ${activeExamGradeFilter === gName ? 'text-amber-100' : 'text-slate-500'}">
+              ${rCount} បន្ទប់ (ស្រី ${fCount})
+            </p>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderGradeFilterTabs() {
+      const container = document.getElementById('examGradeFilterTabs');
+      if (!container) return;
+
+      const gradesPresent = [...new Set(examAllocatedRooms.map(r => r.grade))];
+
+      let html = `
+        <button onclick="setExamGradeFilter('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${activeExamGradeFilter === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+          គ្រប់កម្រិតថ្នាក់ (${gradesPresent.length})
+        </button>
+      `;
+
+      gradesPresent.forEach(gName => {
+        const isActive = activeExamGradeFilter === gName;
+        const gRooms = examAllocatedRooms.filter(r => r.grade === gName);
+        html += `
+          <button onclick="setExamGradeFilter('${gName}')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+            ${gName} (${gRooms.length} បន្ទប់)
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function setExamGradeFilter(gradeName) {
+      activeExamGradeFilter = gradeName;
+      activeExamRoomTab = 'ALL';
+      renderGradeBreakdownCards();
+      renderGradeFilterTabs();
+      renderRoomFilterTabs();
+      renderExamRoomsHTML();
     }
 
     function renderRoomFilterTabs() {
       const container = document.getElementById('examRoomFilterTabs');
       if (!container) return;
 
+      let filteredRooms = examAllocatedRooms;
+      if (activeExamGradeFilter !== 'ALL') {
+        filteredRooms = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      }
+
       let html = `
         <button onclick="setExamRoomFilter('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${activeExamRoomTab === 'ALL' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
-          បន្ទប់ទាំងអស់ (${examAllocatedRooms.length})
+          បន្ទប់ទាំងអស់ (${filteredRooms.length})
         </button>
       `;
 
-      examAllocatedRooms.forEach((r, idx) => {
+      filteredRooms.forEach((r, idx) => {
         const isActive = activeExamRoomTab === idx;
+        const label = activeExamGradeFilter === 'ALL' ? r.fullTitle : r.roomName;
         html += `
           <button onclick="setExamRoomFilter(${idx})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${isActive ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
-            ${r.roomName} (${r.students.length})
+            ${label} (${r.students.length})
           </button>
         `;
       });
@@ -2156,14 +2493,18 @@
 
       const school = document.getElementById('examSchoolSelect').value;
       const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
-      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
       const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
+      let pool = examAllocatedRooms;
+      if (activeExamGradeFilter !== 'ALL') {
+        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      }
+
       const roomsToShow = activeExamRoomTab === 'ALL' 
-        ? examAllocatedRooms 
-        : [examAllocatedRooms[activeExamRoomTab]];
+        ? pool 
+        : (pool[activeExamRoomTab] ? [pool[activeExamRoomTab]] : pool);
 
       let pagesHtml = '';
 
@@ -2211,7 +2552,7 @@
               <div class="flex flex-wrap justify-center items-center gap-3 text-xs font-medium text-slate-700 mt-1">
                 <span>សម័យប្រឡង៖ <strong class="text-slate-900">${examSession}</strong></span>
                 <span>•</span>
-                <span>ថ្នាក់ទី៖ <strong class="text-slate-900">${grade}</strong></span>
+                <span>កម្រិតថ្នាក់៖ <strong class="text-indigo-800 font-bold">${room.grade}</strong></span>
                 <span>•</span>
                 <span class="px-2.5 py-0.5 bg-amber-100 text-amber-900 rounded font-bold">${room.roomName}</span>
               </div>
@@ -2272,14 +2613,18 @@
 
       const school = document.getElementById('examSchoolSelect').value;
       const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
-      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
       const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
+      let pool = examAllocatedRooms;
+      if (activeExamGradeFilter !== 'ALL') {
+        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      }
+
       let docBody = '';
 
-      examAllocatedRooms.forEach((room, roomIdx) => {
+      pool.forEach((room, roomIdx) => {
         let rows = '';
         room.students.forEach(s => {
           rows += `
@@ -2296,7 +2641,7 @@
           `;
         });
 
-        const isLast = roomIdx === examAllocatedRooms.length - 1;
+        const isLast = roomIdx === pool.length - 1;
         const pageBreak = isLast ? '' : '<div style="page-break-after:always; mso-break-type:section-break;"></div>';
 
         docBody += `
@@ -2320,7 +2665,7 @@
             <div style="text-align:center; margin:15px 0;">
               <h2 style="font-size:14pt; font-weight:bold; margin:0;">បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង</h2>
               <p style="font-size:10.5pt; margin:5px 0;">
-                សម័យប្រឡង៖ <strong>${examSession}</strong> &nbsp; | &nbsp; ថ្នាក់ទី៖ <strong>${grade}</strong> &nbsp; | &nbsp; <strong>${room.roomName}</strong>
+                សម័យប្រឡង៖ <strong>${examSession}</strong> &nbsp; | &nbsp; កម្រិតថ្នាក់៖ <strong>${room.grade}</strong> &nbsp; | &nbsp; <strong>${room.roomName}</strong>
               </p>
               <p style="font-size:10pt; margin:3px 0;">
                 បេក្ខជនសរុប៖ <strong>${room.students.length}</strong> នាក់ (ស្រី <strong>${room.femaleCount}</strong> នាក់)
@@ -2408,7 +2753,8 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${grade}.doc`;
+      const scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់_ទី១ដល់ទី៦' : activeExamGradeFilter;
+      a.download = `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${scopeLabel}.doc`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2424,14 +2770,18 @@
 
       const school = document.getElementById('examSchoolSelect').value;
       const cluster = document.getElementById('examClusterInput').value || 'កម្រងផ្ទះរុង';
-      const grade = document.getElementById('examGradeInput').value || 'ថ្នាក់ទី ៦';
       const examSession = document.getElementById('examSessionInput').value || '០១ កក្កដា ២០២៦';
       const footerDate = document.getElementById('examFooterDateInput').value || 'ថ្ងៃទី...... ខែ...... ឆ្នាំ២០២៦';
       const location = document.getElementById('examLocationInput').value || 'តាលោសែនជ័យ';
 
+      let pool = examAllocatedRooms;
+      if (activeExamGradeFilter !== 'ALL') {
+        pool = examAllocatedRooms.filter(r => r.grade === activeExamGradeFilter);
+      }
+
       const wb = XLSX.utils.book_new();
 
-      examAllocatedRooms.forEach((room, roomIdx) => {
+      pool.forEach((room, roomIdx) => {
         const rows = [
           ['រដ្ឋបាលស្រុកតាលោសែនជ័យ', '', '', '', '', '', 'ព្រះរាជាណាចក្រកម្ពុជា'],
           ['ការិយាល័យអប់រំ យុវជន និងកីឡា', '', '', '', '', '', 'ជាតិ សាសនា ព្រះមហាក្សត្រ'],
@@ -2439,7 +2789,7 @@
           [`សាលាបឋមសិក្សា៖ ${school}`, '', '', '', '', '', ''],
           [''],
           ['បញ្ជីរាយនាមបេក្ខជនតាមបន្ទប់ប្រឡង'],
-          [`សម័យប្រឡង៖ ${examSession}    ថ្នាក់ទី៖ ${grade}    ${room.roomName}`],
+          [`សម័យប្រឡង៖ ${examSession}    កម្រិតថ្នាក់៖ ${room.grade}    ${room.roomName}`],
           [`បេក្ខជនសរុប៖ ${room.students.length} នាក់ (ស្រី ${room.femaleCount} នាក់)`],
           [''],
           ['លេខតុ', 'អត្តលេខ', 'គោត្តនាម-នាម', 'អក្សរឡាតាំង', 'ភេទ', 'ថ្ងៃខែឆ្នាំកំណើត', 'ថ្នាក់ដើម', 'ហត្ថលេខាបេក្ខជន']
@@ -2466,10 +2816,13 @@
         );
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, `បន្ទប់ ${String(roomIdx + 1).padStart(2, '0')}`);
+        const gradeShort = room.grade.replace('ថ្នាក់ទី ', 'ថ្នាក់');
+        const sheetTitle = `${gradeShort}_បន្ទប់${String(room.roomNumberInGrade).padStart(2, '0')}`;
+        XLSX.utils.book_append_sheet(wb, ws, sheetTitle.slice(0, 31));
       });
 
-      XLSX.writeFile(wb, `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${grade}.xlsx`);
+      const scopeLabel = activeExamGradeFilter === 'ALL' ? 'គ្រប់ថ្នាក់_ទី១ដល់ទី៦' : activeExamGradeFilter;
+      XLSX.writeFile(wb, `បញ្ជីចែកបន្ទប់ប្រឡង_${school}_${scopeLabel}.xlsx`);
       showToast('បានទាញយក Excel (.xlsx) តាមបន្ទប់ដាច់ដោយឡែកជោគជ័យ!');
     }
 
